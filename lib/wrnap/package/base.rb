@@ -39,7 +39,7 @@ module Wrnap
           data  = [data] unless data.is_a?(Array)
 
           @data = case data.map(&:class)
-          when [Wrnap::Global::Rna]         then data.first
+          when [Wrnap::Global::Rna]             then data.first
           when *(1..3).map { |i| [String] * i } then RNA.from_string(*data)
           when [Hash]                           then RNA.from_hash(*data)
           when [Array]                          then RNA.from_array(*data)

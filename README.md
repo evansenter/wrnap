@@ -1,4 +1,4 @@
-# Wrnap
+# wrnap (w(RNA)p)
 
 [![Gem Version](https://badge.fury.io/rb/wrnap.png)](http://badge.fury.io/rb/wrnap)
 
