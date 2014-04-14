@@ -1,3 +1,4 @@
+require "yaml"
 require "benchmark"
 require "set"
 require "shuffle"
