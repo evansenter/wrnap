@@ -1,23 +1,24 @@
 module Wrnap
   module Package
-    class Spectral < Base      
-      self.default_flags = ->(context, flags) { { seq: context.data.seq, step_size: "1e-2" } }
-      
-      attr_reader :eigenvalues, :time_kinetics
-    
-      def run_command(flags)
-        "%s %s" % [
-          exec_name, 
-          stringify_flags(flags)
-        ]
+    class Spectral < Base
+      self.default_flags = ->(context, flags) do
+        {
+          s: context.data.seq,
+          k: context.data.str_1,
+          l: context.data.str_2
+        }
       end
-    
+      self.quote_flag_params = %i|s k l|
+
+      attr_reader :eigenvalues, :time_kinetics
+
+      def run_command(flags)
+        Wrnap.debugger { "Running #{exec_name} on #{data.inspect}" }
+
+        "%s %s" % [exec_name, stringify_flags(flags)]
+      end
+
       def post_process
-        if flags.keys.include?(:eigen_only)
-          @eigenvalues = response.split(?\n).map(&:to_f).sort_by(&:abs)
-        else
-          @time_kinetics = response.split(?\n).map { |line| line.split(?\t).map(&:to_f) }
-        end
       end
     end
   end

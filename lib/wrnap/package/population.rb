@@ -33,22 +33,29 @@ module Wrnap
         def equilibrium(percentile: 95, window_size: 5, epsilon: 1e-4)
           start       = proportion_points.first
           stop        = proportion_points.last
-          sign        = stop > start ? :increasing : :decreasing
-          # If the population is increasing over time, we want the 95%, otherwise we want the 5%
-          spread_100  = (start.zero? || stop.zero? ? [start, stop].max : (stop / start).abs) / 100
-          # Look for the first index at the percentile we're interested in, and scan to the right from there.
-          start_index = proportion_points.each_with_index.find do |proportion, i|
-            case sign
-            when :increasing then proportion > (stop - (spread_100 * (100 - percentile)))
-            when :decreasing then proportion < (stop + (spread_100 * (100 - percentile)))
-            end
-          end.last
 
-          # The first slice starting at x we find where abs(p(x + i), p(x)) < epslion for all 1 <= x < window_size is equilibrium,
-          # and we return that time point.
-          proportion_over_time[start_index..-1].each_cons(window_size).find do |proportion_slice|
-            proportion_slice.all? { |time, proportion| (proportion - proportion_slice.first.last).abs < epsilon }
-          end.first.first
+          if start != stop
+            sign = stop > start ? :increasing : :decreasing
+            # If the population is increasing over time, we want the 95%, otherwise we want the 5%
+            spread_100  = (start.zero? || stop.zero? ? [start, stop].max : (stop / start).abs) / 100
+            # Look for the first index at the percentile we're interested in, and scan to the right from there.
+            start_index = proportion_points.each_with_index.find do |proportion, i|
+              case sign
+              when :increasing then proportion > (stop - (spread_100 * (100 - percentile)))
+              when :decreasing then proportion < (stop + (spread_100 * (100 - percentile)))
+              end
+            end.last
+
+            # The first slice starting at x we find where abs(p(x + i), p(x)) < epslion for all 1 <= x < window_size is equilibrium,
+            # and we return that time point.
+            equilibrium_time = proportion_over_time[start_index..-1].each_cons(window_size).find do |proportion_slice|
+              proportion_slice.all? { |time, proportion| (proportion - proportion_slice.first.last).abs < epsilon }
+            end
+
+            equilibrium_time ? 10 ** equilibrium_time.first.first : -1
+          else
+            -1
+          end
         end
 
         def time_points; proportion_over_time.map(&:first); end
