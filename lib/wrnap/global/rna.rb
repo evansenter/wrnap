@@ -62,7 +62,7 @@ module Wrnap
       end
 
       def initialize(sequence: "", structure: "", second_structure: "", comment: "")
-        @sequence, @comment = sequence.kind_of?(Rna) ? sequence.seq : sequence, comment
+        @sequence, @comment = (sequence.kind_of?(Rna) ? sequence.seq : sequence).upcase, comment
 
         [:structure, :second_structure].each do |structure_symbol|
           instance_variable_set(

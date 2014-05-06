@@ -95,7 +95,7 @@ module Wrnap
             @raw_sequence
           else
             entrez_sequence = Entrez.rna_sequence_from_entrez(accession, up_coord, coord_window)
-            @raw_sequence   = minus_strand? ? entrez_sequence.complement : entrez_sequence
+            @raw_sequence   = (minus_strand? ? entrez_sequence.complement : entrez_sequence).upcase
           end
         end
 
@@ -123,6 +123,10 @@ module Wrnap
           else
             range
           end
+        end
+
+        def inspect
+          super.gsub(/((\w(::)?)+)>$/) { |_| "%s %d %s %d %s>" % [accession, from, plus_strand? ? ?+ : ?-, to, $1] }
         end
       end
     end
