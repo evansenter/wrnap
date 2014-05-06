@@ -3,7 +3,7 @@ module Wrnap
     class Population < Base
       THREE_COLUMN_REGEX = /^([+-]\d+\.\d+\t){2}[+-]\d+\.\d+$/
 
-      attr_reader :str_1_to_str_2, :str_1_to_str_1
+      attr_reader :str_1_to_str_2, :str_1_to_str_1, :equilibrium
 
       self.default_flags = ->(context, flags) do
         {
@@ -82,9 +82,13 @@ module Wrnap
       end
 
       def post_process
-        time_points, str_1_to_str_2, str_1_to_str_1 = response.split(/\n/).select { |line| line =~ THREE_COLUMN_REGEX }.map { |line| line.split(/\t/).map(&:to_f) }.transpose
-        @str_1_to_str_2 = PopulationProportion.new(time_points, str_1_to_str_2)
-        @str_1_to_str_1 = PopulationProportion.new(time_points, str_1_to_str_1)
+        if flags.include?("-spectral-e")
+          @equilibrium = 10 ** response.strip.to_f
+        else
+          time_points, str_1_to_str_2, str_1_to_str_1 = response.split(/\n/).select { |line| line =~ THREE_COLUMN_REGEX }.map { |line| line.split(/\t/).map(&:to_f) }.transpose
+          @str_1_to_str_2 = PopulationProportion.new(time_points, str_1_to_str_2)
+          @str_1_to_str_1 = PopulationProportion.new(time_points, str_1_to_str_1)
+        end
       end
     end
   end

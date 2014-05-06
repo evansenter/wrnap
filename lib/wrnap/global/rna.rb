@@ -1,7 +1,7 @@
 module Wrnap
   module Global
     class Rna
-      include RnaExtensions
+      include Extensions
 
       attr_accessor :comment
       attr_reader :sequence, :structure, :second_structure
@@ -42,6 +42,10 @@ module Wrnap
               rna.comment = comment
             end
           end
+        end
+
+        def init_from_context(context: [], rna: [])
+          init_from_string(Context.init_from_entrez(*context), *rna)
         end
 
         def init_from_self(rna)
@@ -102,6 +106,8 @@ module Wrnap
         self.class.init_from_string(seq, structure_1.is_a?(Symbol) ? send(structure_1) : structure_1, nil, name)
       end
 
+      alias :one_str :one_structure
+
       def two_structures(structure_1, structure_2)
         self.class.init_from_string(
           seq,
@@ -109,6 +115,8 @@ module Wrnap
           name
         )
       end
+
+      alias :two_str :two_structures
 
       def write_fa!(filename)
         filename.tap do |filename|

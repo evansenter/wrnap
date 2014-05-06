@@ -1,6 +1,6 @@
 module Wrnap
   module Global
-    module RunExtensions
+    module Runner
       def self.included(base)
         base.send(:include, InstanceMethods)
         base.extend(ClassMethods)

@@ -5,8 +5,8 @@ module Wrnap
     end
 
     class Base
-      include Wrnap::Global::RunExtensions
-      include Wrnap::Global::ChainExtensions
+      include Wrnap::Global::Runner
+      include Wrnap::Global::Chainer
 
       class_attribute :executable_name
       self.executable_name = ->(context) { "RNA#{context.class.name.split('::').last.underscore}" }
