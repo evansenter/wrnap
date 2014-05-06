@@ -44,8 +44,8 @@ module Wrnap
           end
         end
 
-        def init_from_context(context: [], rna: [])
-          init_from_string(Context.init_from_entrez(*context), *rna)
+        def init_from_context(*context, coords: {}, rna: {})
+          Context.init_from_entrez(*context, coords: coords, rna: rna)
         end
 
         def init_from_self(rna)
