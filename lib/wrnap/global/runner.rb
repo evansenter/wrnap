@@ -80,7 +80,7 @@ module Wrnap
             parameter = if value == :empty || value.class == TrueClass
               " -%s" % flag
             else
-              if quote_flag_params.include?(flag)
+              if quote_flag_params.map(&:to_s).include?(flag.to_s)
                 " -%s '%s'" % [flag, value.to_s.gsub(/'/) { %|\'| }]
               else
                 " -%s %s" % [flag, value]

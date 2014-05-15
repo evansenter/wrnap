@@ -1,11 +1,7 @@
 module Wrnap
   module Package
     class Plot < Base
-      self.call_with     = [ :comment, :seq, :str]
-      self.default_flags = {
-        t: 0,
-        o: "svg"
-      }
+      self.quote_flag_params = %w|-pre -post|
 
       def run_command(flags)
         "cat %s | %s %s" % [
