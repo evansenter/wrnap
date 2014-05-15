@@ -6,6 +6,8 @@ module Wrnap
         {
           sequenceDBN:  context.data.seq,
           structureDBN: context.data.str,
+          title:        context.data.name,
+          titleSize:    8,
           resolution:   2
         }
       end
