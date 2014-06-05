@@ -50,6 +50,18 @@ module Wrnap
       end
 
       module OneStructureBasedMethods
+        def helices(structure)
+          array = base_pairs(structure).sort_by(&:first).map(&:to_a)
+
+          unless array.empty?
+            array[1..-1].inject([[array.first]]) do |bins, (i, j)|
+              bins.tap { bins[-1][-1] == [i - 1, j + 1] ? bins[-1] << [i, j] : bins << [[i, j]] }
+            end
+          else
+            []
+          end
+        end
+
         def max_bp_distance(structure)
           base_pairs(structure).count + ((structure.length - 3) / 2.0).floor
         end

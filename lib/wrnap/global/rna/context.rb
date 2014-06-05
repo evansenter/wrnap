@@ -40,7 +40,7 @@ module Wrnap
             sequence:         self.sequence,
             structure:        options[:rna][:structure]        || options[:rna][:str_1] || options[:rna][:str],
             second_structure: options[:rna][:second_structure] || options[:rna][:str_2],
-            comment:          options[:rna][:comment]          || options[:rna][:name]
+            comment:          options[:rna][:comment]          || options[:rna][:name] || identifier
           })
 
           remove_instance_variable(:@sequence)
@@ -125,8 +125,12 @@ module Wrnap
           end
         end
 
+        def identifier
+          "%s %d %s %d" % [accession, from, plus_strand? ? ?+ : ?-, to]
+        end
+
         def inspect
-          super.gsub(/((\w(::)?)+)>$/) { |_| "%s %d %s %d %s>" % [accession, from, plus_strand? ? ?+ : ?-, to, $1] }
+          super.gsub(/((\w(::)?)+)>$/) { |_| "%s %s>" % [identifier, $1] }
         end
       end
     end
