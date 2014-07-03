@@ -102,6 +102,12 @@ module Wrnap
 
       alias :empty_str :empty_structure
 
+      def no_structure
+        self.class.init_from_string(seq, nil, nil, name)
+      end
+
+      alias :no_str :no_structure
+
       def one_structure(structure_1)
         self.class.init_from_string(seq, structure_1.is_a?(Symbol) ? send(structure_1) : structure_1, nil, name)
       end
@@ -135,6 +141,10 @@ module Wrnap
 
       def run(package_name, options = {})
         Wrnap::Package.lookup(package_name).run(self, options)
+      end
+
+      def ==(other_rna)
+        other_rna.kind_of?(Wrnap::Global::Rna) ? [seq, str_1, str_2] == [other_rna.seq, other_rna.str_1, other_rna.str_2] : super
       end
 
       def method_missing(name, *args, &block)

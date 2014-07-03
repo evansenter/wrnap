@@ -33,6 +33,10 @@ module Wrnap
         def shuffle(sequence, token_length = 2)
           Shuffle.new(sequence).shuffle(token_length)
         end
+
+        def structure_from_bp_list(length, base_pairs)
+          base_pairs.to_a.map(&:to_a).map(&:sort).inject("." * length) { |structure, (i, j)| structure.tap { structure[i] = ?(; structure[j] = ?) } }
+        end
       end
 
       module InstanceMethods
