@@ -3,6 +3,8 @@ module Wrnap
     class Rna
       include Extensions
 
+      CANONICAL_BASES = Set.new << Set.new([?G, ?C]) << Set.new([?A, ?U]) << Set.new([?G, ?U])
+
       attr_accessor :comment
       attr_reader :sequence, :structure, :second_structure
 
@@ -123,6 +125,13 @@ module Wrnap
       end
 
       alias :two_str :two_structures
+
+      def print_full
+        puts name  if name
+        puts seq   if seq
+        puts str_1 if str_1
+        puts str_2 if str_2
+      end
 
       def write_fa!(filename)
         filename.tap do |filename|
