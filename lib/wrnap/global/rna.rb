@@ -51,7 +51,7 @@ module Wrnap
         end
 
         def init_from_context(*context, coords: {}, rna: {}, &block)
-          Context.init_from_entrez(*context, coords: coords, rna: rna)
+          Context.init_from_entrez(*context, coords: coords, rna: rna, &block)
         end
 
         def init_from_self(rna, &block)
@@ -88,7 +88,7 @@ module Wrnap
           )
         end
 
-        metadata.instance_eval(&block)
+        metadata.instance_eval(&block) if block_given?
 
         if str && seq.length != str.length
           Wrnap.debugger { "The sequence length (%d) doesn't match the structure length (%d)" % [seq, str].map(&:length) }
@@ -175,7 +175,7 @@ module Wrnap
           ("#{seq[0, 20]   + (seq.length > 20   ? '... [%d]' % seq.length : '')}" if seq   && !seq.empty?),
           ("#{str_1[0, 20] + (str_1.length > 20 ? ' [%d]'    % seq.length : '')}" if str_1 && !str_1.empty?),
           ("#{str_2[0, 20] + (str_2.length > 20 ? ' [%d]'    % seq.length : '')}" if str_2 && !str_1.empty?),
-          (md.to_json unless meta.empty?),
+          (md.to_json unless md.empty?),
           (name ? name : "#{self.class.name}")
         ].compact.join(", ")
       end

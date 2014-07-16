@@ -5,27 +5,29 @@ module Wrnap
         attr_reader :accession, :from, :to, :coord_options
 
         class << self
-          def init_from_entrez(accession, from, to, options = {})
+          def init_from_entrez(accession, from, to, options = {}, &block)
             new(
               accession: accession,
               from:      from,
               to:        to,
-              options:   options
+              options:   options,
+              &block
             )
           end
 
-          def init_from_string(sequence, accession, from, to, options = {})
+          def init_from_string(sequence, accession, from, to, options = {}, &block)
             new(
               sequence:  sequence,
               accession: accession,
               from:      from,
               to:        to,
-              options:   options
+              options:   options,
+              &block
             )
           end
         end
 
-        def initialize(sequence: nil, accession: nil, from: nil, to: nil, options: {})
+        def initialize(sequence: nil, accession: nil, from: nil, to: nil, options: {}, &block)
           options = { coords: {}, rna: {} }.merge(options)
 
           @accession, @from, @to, @coord_options = accession, from, to, options[:coords]
@@ -36,12 +38,13 @@ module Wrnap
             @raw_sequence = (sequence.is_a?(String) ? Bio::Sequence::NA.new(sequence) : sequence).upcase
           end
 
-          super({
+          super(
             sequence:         self.sequence,
             structure:        options[:rna][:structure]        || options[:rna][:str_1] || options[:rna][:str],
             second_structure: options[:rna][:second_structure] || options[:rna][:str_2],
-            comment:          options[:rna][:comment]          || options[:rna][:name] || identifier
-          })
+            comment:          options[:rna][:comment]          || options[:rna][:name] || identifier,
+            &block
+          )
 
           remove_instance_variable(:@sequence)
         end
