@@ -1,43 +1,47 @@
 module Wrnap
   module Global
     class Rna
+      extend Forwardable
       include Extensions
+      include Metadata
 
       CANONICAL_BASES = Set.new << Set.new([?G, ?C]) << Set.new([?A, ?U]) << Set.new([?G, ?U])
 
       attr_accessor :comment
-      attr_reader :sequence, :structure, :second_structure
+      attr_reader :sequence, :structure, :second_structure, :metadata
 
       class << self
-        def init_from_string(sequence, structure = nil, second_structure = nil, comment = nil)
+        def init_from_string(sequence, structure = nil, second_structure = nil, comment = nil, &block)
           new(
             sequence:         sequence,
             structure:        structure,
             second_structure: second_structure,
-            comment:          comment
+            comment:          comment,
+            &block
           )
         end
 
-        def init_from_hash(hash)
+        def init_from_hash(hash, &block)
           new(
             sequence:         hash[:sequence]         || hash[:seq],
             structure:        hash[:structure]        || hash[:str_1] || hash[:str],
             second_structure: hash[:second_structure] || hash[:str_2],
-            comment:          hash[:comment]          || hash[:name]
+            comment:          hash[:comment]          || hash[:name],
+            &block
           )
         end
 
-        def init_from_array(array)
-          init_from_string(*array)
+        def init_from_array(array, &block)
+          init_from_string(*array, &block)
         end
 
-        def init_from_fasta(string)
+        def init_from_fasta(string, &block)
           if File.exist?(string)
             comment = File.basename(string, string.include?(?.) ? ".%s" % string.split(?.)[-1] : "")
             string  = File.read(string).chomp
           end
 
-          init_from_string(*string.split(/\n/).reject { |line| line.start_with?(">") }[0, 3]).tap do |rna|
+          init_from_string(*string.split(/\n/).reject { |line| line.start_with?(">") }[0, 3], &block).tap do |rna|
             if (line = string.split(/\n/).first).start_with?(">") && !(file_comment = line.gsub(/^>\s*/, "")).empty?
               rna.comment = file_comment
             elsif comment
@@ -46,25 +50,26 @@ module Wrnap
           end
         end
 
-        def init_from_context(*context, coords: {}, rna: {})
+        def init_from_context(*context, coords: {}, rna: {}, &block)
           Context.init_from_entrez(*context, coords: coords, rna: rna)
         end
 
-        def init_from_self(rna)
+        def init_from_self(rna, &block)
           # This happens when you call a Wrnap library function with the output of something like Wrnap::Fold.run(...).mfe
           new(
             sequence:         rna.sequence,
             strucutre:        rna.structure,
             second_strucutre: rna.second_structure,
-            comment:          rna.comment
+            comment:          rna.comment,
+            &block
           )
         end
 
         alias_method :placeholder, :new
       end
 
-      def initialize(sequence: "", structure: "", second_structure: "", comment: "")
-        @sequence, @comment = (sequence.kind_of?(Rna) ? sequence.seq : sequence).upcase, comment
+      def initialize(sequence: "", structure: "", second_structure: "", comment: "", &block)
+        @sequence, @comment, @metadata = (sequence.kind_of?(Rna) ? sequence.seq : sequence).upcase, comment, Metadata::Container.new(self)
 
         [:structure, :second_structure].each do |structure_symbol|
           instance_variable_set(
@@ -82,6 +87,8 @@ module Wrnap
             end
           )
         end
+
+        metadata.instance_eval(&block)
 
         if str && seq.length != str.length
           Wrnap.debugger { "The sequence length (%d) doesn't match the structure length (%d)" % [seq, str].map(&:length) }
@@ -126,13 +133,6 @@ module Wrnap
 
       alias :two_str :two_structures
 
-      def print_full
-        puts name  if name
-        puts seq   if seq
-        puts str_1 if str_1
-        puts str_2 if str_2
-      end
-
       def write_fa!(filename)
         filename.tap do |filename|
           File.open(filename, ?w) do |file|
@@ -162,11 +162,20 @@ module Wrnap
         else super end
       end
 
+      def pp
+        puts("> %s" % name) if name
+        puts("%s" % seq)    if seq
+        puts("%s" % str_1)  if str_1
+        puts("%s" % str_2)  if str_2
+        puts("%s" % meta)   if meta
+      end
+
       def inspect
         "#<RNA: %s>" % [
           ("#{seq[0, 20]   + (seq.length > 20   ? '... [%d]' % seq.length : '')}" if seq   && !seq.empty?),
           ("#{str_1[0, 20] + (str_1.length > 20 ? ' [%d]'    % seq.length : '')}" if str_1 && !str_1.empty?),
           ("#{str_2[0, 20] + (str_2.length > 20 ? ' [%d]'    % seq.length : '')}" if str_2 && !str_1.empty?),
+          (md.to_json unless meta.empty?),
           (name ? name : "#{self.class.name}")
         ].compact.join(", ")
       end

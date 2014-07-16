@@ -14,6 +14,7 @@ require "active_support/core_ext/class"
 
 require "wrnap/version"
 require "wrnap/global/rna/extensions"
+require "wrnap/global/rna/metadata"
 require "wrnap/global/rna"
 require "wrnap/global/rna/context"
 require "wrnap/global/chainer"
@@ -66,23 +67,23 @@ end
 
 # This dirties up the public namespace, but I use it so many times that I want a shorthand to it
 unless defined? RNA
-  def RNA(*args)
-    RNA.from_array(args)
+  def RNA(*args, &block)
+    RNA.from_array(args, &block)
   end
 end
 
 module RNA
-  def self.load_all(pattern = "*.fa")
-    Dir[File.directory?(pattern) ? pattern + "/*.fa" : pattern].map { |file| RNA.from_fasta(file) }
+  def self.load_all(pattern = "*.fa", &block)
+    Dir[File.directory?(pattern) ? pattern + "/*.fa" : pattern].map { |file| RNA.from_fasta(file, &block) }
   end
 
-  def self.random(size, *args)
-    RNA.from_array(args.unshift(Wrnap::Global::Rna.generate_sequence(size).seq))
+  def self.random(size, *args, &block)
+    RNA.from_array(args.unshift(Wrnap::Global::Rna.generate_sequence(size).seq), &block)
   end
 
   def self.method_missing(name, *args, &block)
     if "#{name}" =~ /^from_\w+$/
-      Wrnap::Global::Rna.send("init_#{name}", *args)
+      Wrnap::Global::Rna.send("init_#{name}", *args, &block)
     else super end
   end
 end
