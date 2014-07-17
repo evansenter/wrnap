@@ -32,7 +32,8 @@ module Wrnap
         end
 
         def pull_infernal_hit_sequence(output)
-          output.split(?\n).select { |line| line =~ HIT_SEQUENCE }.last.match(HIT_SEQUENCE)[1].upcase
+          # Dots are gaps in Stockholm format, and this uses the Stockholm parser underneath.
+          output.split(?\n).select { |line| line =~ HIT_SEQUENCE }.last.match(HIT_SEQUENCE)[1].upcase.gsub(?-, ?.)
         end
 
         def pull_infernal_hit_structure(output)
