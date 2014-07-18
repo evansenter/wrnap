@@ -6,7 +6,9 @@ module Wrnap
           meta_rna { |metadata| tree(TreePlanter.new(metadata.__rna__)) }
         end
 
-        def trunk; md[:tree] || with_tree.trunk; end
+        def trunk
+          md[:tree] || with_tree.trunk
+        end
       end
 
       class TreePlanter

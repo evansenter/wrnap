@@ -9,7 +9,7 @@ module Wrnap
         module InstanceMethods
           def self.included(base)
             base.class_eval do
-              def_delegator :@metadata, :data, :md
+              def_delegator :@metadata, :__data__, :md
             end
           end
 
@@ -23,16 +23,22 @@ module Wrnap
         end
 
         class Container
-          attr_reader :__rna__, :data
+          attr_reader :__rna__, :__data__
 
           def initialize(rna)
-            @__rna__, @data = rna, {}
+            @__rna__, @__data__ = rna, {}
           end
+
+          def inspect
+            "#<Metadata: %s>" % __data__.inspect
+          end
+
+          alias :to_s :inspect
 
           def method_missing(name, *args, &block)
             case args.size
-            when 0 then data[name]
-            when 1 then data[name.to_s.gsub(/=$/, "").to_sym] = args.first
+            when 0 then __data__[name]
+            when 1 then __data__[name.to_s.gsub(/=$/, "").to_sym] = args.first
             else super end
           end
         end
