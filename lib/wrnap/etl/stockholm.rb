@@ -19,12 +19,12 @@ module Wrnap
         end
 
         def balanced_consensus_from_sequence(sequence, structure)
-          Wrnap::Global::Rna.init_from_string(
+          Wrnap::Rna.init_from_string(
             sequence,
-            Wrnap::Global::Rna.structure_from_bp_list(
+            Wrnap::Rna.structure_from_bp_list(
               sequence.length,
               sequence.split(//).zip(structure.split(//)).each_with_index.inject(
-                Wrnap::Global::Rna.base_pairs(structure).map(&:to_a).select { |i, j| Wrnap::Global::Rna::CANONICAL_BASES.include?(Set.new([sequence[i], sequence[j]])) }
+                Wrnap::Rna.base_pairs(structure).map(&:to_a).select { |i, j| Wrnap::Rna::CANONICAL_BASES.include?(Set.new([sequence[i], sequence[j]])) }
               ) do |valid_bases, ((bp, symbol), i)|
                 valid_bases - (bp == ?. && symbol != ?. ? (valid_bases.select { |bps| bps.any? { |j| i == j } }) : [])
               end
@@ -33,14 +33,14 @@ module Wrnap
         end
 
         def prune_gaps(rna)
-          Wrnap::Global::Rna.init_from_array(rna.seq.split(//).zip(rna.str.split(//)).reject { |nucleotide, _| nucleotide == ?. }.transpose.map(&:join))
+          Wrnap::Rna.init_from_array(rna.seq.split(//).zip(rna.str.split(//)).reject { |nucleotide, _| nucleotide == ?. }.transpose.map(&:join))
         end
 
         def theta_filter(rna)
           # Needs to happen after gap pruning.
-          Wrnap::Global::Rna.init_from_string(
+          Wrnap::Rna.init_from_string(
             rna.seq,
-            Wrnap::Global::Rna.structure_from_bp_list(rna.seq.length, rna.base_pairs.map(&:to_a).select { |i, j| (j - i).abs > 3 })
+            Wrnap::Rna.structure_from_bp_list(rna.seq.length, rna.base_pairs.map(&:to_a).select { |i, j| (j - i).abs > 3 })
           )
         end
       end

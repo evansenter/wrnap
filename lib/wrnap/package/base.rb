@@ -7,6 +7,7 @@ module Wrnap
     class Base
       include Wrnap::Global::Runner
       include Wrnap::Global::Chainer
+      include Wrnap::Global::Yaml
 
       class_attribute :executable_name
       self.executable_name = ->(context) { "RNA#{context.class.name.split('::').last.underscore}" }
@@ -39,20 +40,16 @@ module Wrnap
           data  = [data] unless data.is_a?(Array)
 
           @data = case data.map(&:class)
-          when [Wrnap::Global::Rna], [Wrnap::Global::Rna::Context] then data.first
+          when [Wrnap::Rna], [Wrnap::Rna::Context] then data.first
           when *(1..3).map { |i| [String] * i }                    then RNA.from_string(*data)
           when [Hash]                                              then RNA.from_hash(*data)
           when [Array]                                             then RNA.from_array(*data)
-          when [NilClass]                                          then Wrnap::Global::Rna.placeholder
-          else raise TypeError.new("Unsupported Wrnap::Global::Rna#initialize format: #{data}")
+          when [NilClass]                                          then Wrnap::Rna.placeholder
+          else raise TypeError.new("Unsupported Wrnap::Rna#initialize format: #{data}")
           end
         else
           @data = transform_for_chaining(data)
         end
-      end
-
-      def serialize
-        YAML.dump(self)
       end
 
       def debugger(&block)

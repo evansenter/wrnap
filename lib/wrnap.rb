@@ -14,21 +14,17 @@ require "active_support/inflector"
 require "active_support/core_ext/class"
 
 require "wrnap/version"
-require "wrnap/global/rna/extensions"
-require "wrnap/global/rna/metadata"
-require "wrnap/global/rna/tree"
-require "wrnap/global/rna/helix"
-require "wrnap/global/rna"
-require "wrnap/global/rna/context"
-require "wrnap/global/chainer"
-require "wrnap/global/entrez"
-require "wrnap/global/parser"
-require "wrnap/global/runner"
-require "wrnap/etl/infernal"
-require "wrnap/etl/stockholm"
-require "wrnap/graphing/r"
+
+%w|global rna etl graphing|.each do |subfolder|
+  Dir[File.join(File.dirname(__FILE__), "wrnap", subfolder, "*.rb")].each do |file|
+    require file
+  end
+end
+
+require "wrnap/rna"
 require "wrnap/package/base"
 
+# RinRuby is really finnicky.
 begin; R.quit; rescue IOError; end
 
 module Wrnap
@@ -36,8 +32,8 @@ module Wrnap
   @debug = true
 
   module Package
-    Dir[File.join(File.dirname(__FILE__), "wrnap", "package", "*.rb")].reject { |file| file =~ /\/base.rb/ }.each do |file|
-      autoload(File.basename(file, ".rb").camelize.to_sym, "wrnap/package/#{File.basename(file, '.rb')}")
+    Dir[File.join(File.dirname(__FILE__), "wrnap", "package", "*.rb")].reject { |file| file =~ /\/base.rb$/ }.each do |file|
+      autoload(File.basename(file, ".rb").camelize.to_sym, File.join("wrnap", "package", File.basename(file, ".rb")))
     end
 
     def self.const_missing(name)
@@ -49,10 +45,6 @@ module Wrnap
         end
       end
     end
-  end
-
-  def self.deserialize(string)
-    YAML.load(File.exist?(string) ? File.read(string) : string)
   end
 
   def self.debugger
@@ -68,25 +60,30 @@ module Wrnap
   end
 end
 
-# This dirties up the public namespace, but I use it so many times that I want a shorthand to it
+# -----------------------------------------------------------------------------------------------
+# This dirties up the public namespace, but I use it so many times that I want a shorthand to it.
+# -----------------------------------------------------------------------------------------------
+
+class Array; include Wrnap::Rna::Wrnapper; end
+
 unless defined? RNA
   def RNA(*args, &block)
     RNA.from_array(args, &block)
   end
-end
 
-module RNA
-  def self.load_all(pattern = "*.fa", &block)
-    Dir[File.directory?(pattern) ? pattern + "/*.fa" : pattern].map { |file| RNA.from_fasta(file, &block) }
-  end
+  module RNA
+    def self.load_all(pattern = "*.fa", &block)
+      Wrnap::Rna::Box.load_all(pattern, &block)
+    end
 
-  def self.random(size, *args, &block)
-    RNA.from_array(args.unshift(Wrnap::Global::Rna.generate_sequence(size).seq), &block)
-  end
+    def self.random(size, *args, &block)
+      RNA.from_array(args.unshift(Wrnap::Rna.generate_sequence(size).seq), &block)
+    end
 
-  def self.method_missing(name, *args, &block)
-    if "#{name}" =~ /^from_\w+$/
-      Wrnap::Global::Rna.send("init_#{name}", *args, &block)
-    else super end
+    def self.method_missing(name, *args, &block)
+      if "#{name}" =~ /^from_\w+$/
+        Wrnap::Rna.send("init_#{name}", *args, &block)
+      else super end
+    end
   end
 end

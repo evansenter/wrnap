@@ -1,9 +1,10 @@
 module Wrnap
   module Etl
     module Infernal
-      NAME_REGEX   = />>\s+(\S+)(.*\n){3}.*\s(\d+)\s+(\d+)\s+[\+-].*\n/
-      HIT_SEQUENCE = /^.*\d+\s+(.*)\s+\d+\s*$/
-      LOCAL_END    = /\*\[\s*\d+\s*\]\*/
+      NAME_REGEX    = />>\s+(\S+)(.*\n){3}.*\s(\d+)\s+(\d+)\s+[\+-].*\n/
+      HIT_SEQUENCE  = /^.*\d+\s+(.*)\s+\d+\s*$/
+      HIT_STRUCTURE = /([()<>\[\]{}_~,.:]+)\s+CS/
+      LOCAL_END     = /\*\[\s*\d+\s*\]\*/
 
       class << self
         def parse_file(file)
@@ -20,9 +21,9 @@ module Wrnap
         end
 
         def parse_hit(output)
-          name = if output =~ NAME_REGEX
+          name = if (name_match = output.match(NAME_REGEX))
             # This is a pretty fancy regex, and there's no guarantee that the data has this info, so let's just test the waters here.
-            _, id, _, seq_from, seq_to, _ = output.match(NAME_REGEX).to_a
+            _, id, _, seq_from, seq_to, _ = name_match.to_a
             "%s %d %d" % [id.split(?|).last, seq_from, seq_to]
           end
 
@@ -33,16 +34,16 @@ module Wrnap
 
         def pull_infernal_hit_sequence(output)
           # Dots are gaps in Stockholm format, and this uses the Stockholm parser underneath.
-          output.split(?\n).select { |line| line =~ HIT_SEQUENCE }.last.match(HIT_SEQUENCE)[1].upcase.gsub(?-, ?.)
+          output.scan(HIT_SEQUENCE)[-1][-1].upcase.gsub(?-, ?.)
         end
 
         def pull_infernal_hit_structure(output)
-          convert_infernal_to_dot_bracket(output.split(?\n).find { |line| line =~ /CS\s*$/ }.gsub(/\s+CS\s*$/, "").strip)
+          convert_infernal_to_dot_bracket(output.match(HIT_STRUCTURE)[1])
         end
 
         def convert_infernal_to_dot_bracket(structure)
           # http://jalview-rnasupport.blogspot.com/2010/06/parsing-wuss-notation-of-rna-secondary.html
-          structure.gsub(/[:,_-]/, ?.).gsub(/[<\[\{]/, ?().gsub(/[>\]\}]/, ?))
+          structure.gsub(/[_~,.:]/, ?.).gsub(/[(<{\[]/, ?().gsub(/[)>}\]]/, ?))
         end
       end
     end
