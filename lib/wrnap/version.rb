@@ -1,3 +1,3 @@
 module Wrnap
-  VERSION = "0.12.2"
+  VERSION = "1.0.0"
 end
