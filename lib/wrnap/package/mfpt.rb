@@ -5,7 +5,7 @@ module Wrnap
   module Package
     class Mfpt < Base
       self.chains_from   = Wrnap::Package::EnergyGrid2d
-      self.default_flags = ->(context, flags) { { X: :empty, H: :empty, N: context.data.seq.length, D: context.data.bp_distance, Q: "1e-8" } }
+      self.default_flags = ->(context, flags) { { X: :empty, H: :empty, N: context.data.len, D: context.data.bp_distance, Q: "1e-8" } }
       # These flags aren't well setup for alternative options at the moment.
       
       attr_reader :mfpt

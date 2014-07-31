@@ -2,7 +2,7 @@ module Wrnap
   module Package
     class FoldConstrained < Base
       self.executable_name = "RNAfold"
-      self.call_with       = [:seq, :str]
+      self.call_with       = [:seq, :constraint_mask]
       self.default_flags   = {
         :C      => true,
         "-noPS" => :empty
@@ -13,7 +13,7 @@ module Wrnap
       def post_process
         structure = Wrnap::Global::Parser.rnafold_mfe_structure(response)
 
-        unless data.seq.length == structure.length
+        unless data.len == structure.length
           raise "Sequence: '#{data.seq}'\nStructure: '#{structure}'"
         else
           @mfe_rna, @structure, @mfe = RNA.from_string(data.seq, structure), structure, Wrnap::Global::Parser.rnafold_mfe(response)

@@ -28,11 +28,11 @@ module Wrnap
     
       def full_distribution
         distribution      = run.distribution
-        full_distribution = distribution + ([0.0] * ((differnece = data.seq.length - distribution.length + 1) < 0 ? 0 : differnece))
+        full_distribution = distribution + ([0.0] * ((differnece = data.len - distribution.length + 1) < 0 ? 0 : differnece))
       end
     
       def k_p_points
-        full_distribution.each_with_index.to_a.map(&:reverse)[0..data.seq.length]
+        full_distribution.each_with_index.to_a.map(&:reverse)[0..data.len]
       end
     
       def expected_k

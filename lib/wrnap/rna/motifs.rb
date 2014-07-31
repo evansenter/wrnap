@@ -1,6 +1,6 @@
 module Wrnap
   class Rna
-    module HelixFunctions
+    module Motifs
       def helices
         array = base_pairs.sort_by(&:first).map(&:to_a)
 
@@ -19,31 +19,53 @@ module Wrnap
     end
 
     class Helix
-      attr_reader :i, :j
-      attr_accessor :length
+      attr_reader :i, :j, :length
 
       def initialize(i, j, length)
         @i, @j, @length = i, j, length
+      end
+      
+      def k; i + length - 1; end
+      def l; j - length + 1; end
+      
+      def to_loops
+        [Loop.new(i, k), Loop.new(l, j)]
       end
 
       def reindex!(rna)
         tap do
           if i < 0 && j < 0
-            @i = rna.seq.length + i
-            @j = rna.seq.length + j
+            @i = rna.len + i
+            @j = rna.len + j
           else
-            @i = i - rna.seq.length
-            @j = j - rna.seq.length
+            @i = i - rna.len
+            @j = j - rna.len
           end
         end
       end
 
       def name
-        "(%d, %d)" % [i, j]
+        "(%d..%d, %d..%d)" % [i, k, l, j]
       end
 
       def inspect
-        "#<Wrnap::Rna::Helix: %d %d %d>" % [i, j, length]
+        "#<Helix: %s>" % name
+      end
+    end
+    
+    class Loop
+      attr_reader :i, :j
+      
+      def initialize(i, j)
+        @i, @j = i, j
+      end
+      
+      def name
+        "(%d, %d)" % [i, j]
+      end
+      
+      def inspect
+        "#<Loop: %s>" % name
       end
     end
   end

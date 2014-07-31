@@ -14,17 +14,17 @@ module Wrnap
       extend Forwardable
       include Enumerable
 
-      STEM_NOTATION_REGEX = /^p((\d+_)*(\d+))$/
+      STEM_NOTATION_REGEX = /^p((\d+_)*(\d+))(_?([ijkl]))?$/
 
       def_delegators :@content, :i, :j
       def_delegator  :@content, :length, :stem_length
 
       def method_missing(name, *args, &block)
-        if (name = name.to_s) =~ STEM_NOTATION_REGEX
+        if name.to_s =~ STEM_NOTATION_REGEX
           if $2 && child = children[$2.to_i - 1]
-            child.send("p%s" % name.gsub(/^p\d+_/, ""))
+            child.send("p%s" % name.to_s.gsub(/^p\d+_/, ""))
           elsif child = children[$1.to_i - 1]
-            child.content
+            $5 ? child.content.send($5) : child.content
           else
             nil
           end
@@ -95,6 +95,8 @@ module Wrnap
               node.remove_from_parent!
             end
           end
+          
+          extend_tree!
         end
       end
 

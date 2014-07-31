@@ -5,8 +5,9 @@ module Wrnap
     include Wrnap::Rna::Extensions
     include Wrnap::Rna::Wrnapper
     include Wrnap::Rna::Metadata
+    include Wrnap::Rna::Motifs
     include Wrnap::Rna::TreeFunctions
-    include Wrnap::Rna::HelixFunctions
+    include Wrnap::Rna::Constraints
 
     CANONICAL_BASES = Set.new << Set.new([?G, ?C]) << Set.new([?A, ?U]) << Set.new([?G, ?U])
 
@@ -93,7 +94,7 @@ module Wrnap
 
       metadata.instance_eval(&block) if block_given?
 
-      if str && seq.length != str.length
+      if str && len != str.length
         Wrnap.debugger { "The sequence length (%d) doesn't match the structure length (%d)" % [seq, str].map(&:length) }
       end
 
@@ -107,13 +108,15 @@ module Wrnap
     alias :str_1 :structure
     alias :str_2 :second_structure
     alias :name  :comment
+    
+    def_delegator :@sequence, :length, :len
 
     def copy_name_from(rna)
       tap { @comment = rna.name }
     end
 
     def empty_structure
-      "." * seq.length
+      "." * len
     end
 
     alias :empty_str :empty_structure
@@ -159,6 +162,10 @@ module Wrnap
       Wrnap::Package.lookup(package_name).run(self, options)
     end
 
+    def eql?(other_rna)
+      self == other_rna
+    end
+
     def ==(other_rna)
       other_rna.kind_of?(Wrnap::Rna) ? [seq, str_1, str_2] == [other_rna.seq, other_rna.str_1, other_rna.str_2] : super
     end
@@ -179,9 +186,9 @@ module Wrnap
 
     def inspect
       "#<RNA: %s>" % [
-        ("#{seq[0, 20]   + (seq.length > 20   ? '... [%d]' % seq.length : '')}" if seq   && !seq.empty?),
-        ("#{str_1[0, 20] + (str_1.length > 20 ? ' [%d]'    % seq.length : '')}" if str_1 && !str_1.empty?),
-        ("#{str_2[0, 20] + (str_2.length > 20 ? ' [%d]'    % seq.length : '')}" if str_2 && !str_1.empty?),
+        ("#{seq[0, 20]   + (len > 20   ? '... [%d]' % len : '')}" if seq   && !seq.empty?),
+        ("#{str_1[0, 20] + (str_1.length > 20 ? ' [%d]'    % len : '')}" if str_1 && !str_1.empty?),
+        ("#{str_2[0, 20] + (str_2.length > 20 ? ' [%d]'    % len : '')}" if str_2 && !str_1.empty?),
         (md.inspect unless md.nil? || md.empty?),
         (name ? name : "#{self.class.name}")
       ].compact.join(", ")

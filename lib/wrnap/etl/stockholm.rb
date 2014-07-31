@@ -40,7 +40,7 @@ module Wrnap
           # Needs to happen after gap pruning.
           Wrnap::Rna.init_from_string(
             rna.seq,
-            Wrnap::Rna.structure_from_bp_list(rna.seq.length, rna.base_pairs.map(&:to_a).select { |i, j| (j - i).abs > 3 })
+            Wrnap::Rna.structure_from_bp_list(rna.len, rna.base_pairs.map(&:to_a).select { |i, j| (j - i).abs > 3 })
           )
         end
       end

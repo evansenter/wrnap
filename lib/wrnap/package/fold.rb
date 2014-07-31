@@ -10,7 +10,7 @@ module Wrnap
       def post_process
         structure = Wrnap::Global::Parser.rnafold_mfe_structure(response)
       
-        unless data.seq.length == structure.length
+        unless data.len == structure.length
           raise "Sequence: '#{data.seq}'\nStructure: '#{structure}'"
         else
           @mfe_rna, @structure, @mfe = RNA.from_string(data.seq, structure), structure, Wrnap::Global::Parser.rnafold_mfe(response)
