@@ -3,7 +3,6 @@ require "benchmark"
 require "set"
 require "tree"
 require "shuffle"
-require "rinruby"
 require "tempfile"
 require "bigdecimal"
 require "rroc"
@@ -12,6 +11,12 @@ require "bio-stockholm"
 require "entrez"
 require "active_support/inflector"
 require "active_support/core_ext/class"
+
+unless %x[which R].empty?
+  require "rinruby"
+  # RinRuby opens up a connection to R by default, we don't want that. Connections are opened on-demand.
+  begin; R.quit; rescue IOError; end
+end
 
 require "wrnap/version"
 
@@ -23,9 +28,6 @@ end
 
 require "wrnap/rna"
 require "wrnap/package/base"
-
-# RinRuby is really finnicky.
-begin; R.quit; rescue IOError; end
 
 module Wrnap
   RT     = 1e-3 * 1.9872041 * (273.15 + 37) # kcal / K / mol @ 37C

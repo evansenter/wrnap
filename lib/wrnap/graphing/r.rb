@@ -3,10 +3,14 @@ module Wrnap
     module R
       class << self
         def graph(&block)
-          begin
-            (yield (r_instance = RinRuby.new)).tap { r_instance.close }
-          rescue RuntimeError => e
-            raise unless e.message == "Unsupported data type on R's end"
+          if const_defined?(:RinRuby)
+            begin
+              (yield (r_instance = RinRuby.new(false))).tap { r_instance.close }
+            rescue RuntimeError => e
+              raise unless e.message == "Unsupported data type on R's end"
+            end
+          else
+            raise RuntimeError.new("Your system does not appear to have R installed, and thus the RinRuby gem was not loaded.")
           end
         end
 
