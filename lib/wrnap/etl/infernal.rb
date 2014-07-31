@@ -3,7 +3,7 @@ module Wrnap
     module Infernal
       NAME_REGEX    = />>\s+(\S+)(.*\n){3}.*\s(\d+)\s+(\d+)\s+[\+-].*\n/
       HIT_SEQUENCE  = /^.*\d+\s+(.*)\s+\d+\s*$/
-      HIT_STRUCTURE = /([()<>\[\]{}_~,.:]+)\s+CS/
+      HIT_STRUCTURE = /([()<>{}\[\]\-_~,.:]+)\s+CS/
       LOCAL_END     = /\*\[\s*\d+\s*\]\*/
 
       class << self
