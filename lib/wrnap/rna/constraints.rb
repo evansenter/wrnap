@@ -33,9 +33,6 @@ module Wrnap
         end
         
         def mask!(mask_object, *args)
-          ap mask_object
-          ap args
-          
           case mask_object
           when Helix then mask_helix!(mask_object, *args)
           when Loop  then mask_loop!(mask_object, symbol: args[0][:symbol])
@@ -44,13 +41,6 @@ module Wrnap
 
         def mask_helix!(helix, side: :both, symbol: "()")
           left_loop, right_loop = helix.to_loops
-          
-          ap [
-            "mask_helix!",
-            helix,
-            side,
-            symbol
-          ]
 
           if symbol.length > 1
             left_symbol, right_symbol = symbol.split(//)
@@ -63,12 +53,6 @@ module Wrnap
         end
         
         def mask_loop!(l00p, symbol: "x")
-          ap [
-            "mask_loop!",
-            l00p,
-            symbol
-          ]
-          
           mask_region!(l00p.i, l00p.j, symbol: symbol)
         end
         
