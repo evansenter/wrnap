@@ -186,7 +186,7 @@ module Wrnap
 
     def inspect
       "#<RNA: %s>" % [
-        ("#{seq[0, 20]   + (len > 20   ? '... [%d]' % len : '')}" if seq   && !seq.empty?),
+        ("#{seq[0, 20]   + (len          > 20 ? '... [%d]' % len : '')}" if seq   && !seq.empty?),
         ("#{str_1[0, 20] + (str_1.length > 20 ? ' [%d]'    % len : '')}" if str_1 && !str_1.empty?),
         ("#{str_2[0, 20] + (str_2.length > 20 ? ' [%d]'    % len : '')}" if str_2 && !str_1.empty?),
         (md.inspect unless md.nil? || md.empty?),
