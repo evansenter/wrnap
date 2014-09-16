@@ -7,7 +7,7 @@ module Wrnap
       LOCAL_END     = /\*\[\s*\d+\s*\]\*/
 
       class << self
-        def parse_file(file)
+        def load_all(file)
           output = File.exist?(file) ? File.read(file) : file
 
           if output =~ /No hits detected that satisfy reporting thresholds/
@@ -17,7 +17,7 @@ module Wrnap
               gsub(/^(.*\n)*Hit alignments:\n/, "").
               gsub(/Internal CM pipeline statistics summary:\n(.*\n)*$/, "").
               strip.split(?\n).reject(&:empty?).each_slice(10).map { |lines| parse_hit(lines.join(?\n)) }.compact
-          end
+          end.wrnap
         end
 
         def parse_hit(output)
