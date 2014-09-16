@@ -15,7 +15,7 @@ module Wrnap
       self.quote_flag_params = %w|sequenceDBN structureDBN title|
 
       def run_command(flags)
-        "java fr.orsay.lri.varna.applications.VARNAcmd %s" % stringify_flags(flags)
+        "java -Djava.awt.headless=true fr.orsay.lri.varna.applications.VARNAcmd %s" % stringify_flags(flags)
       end
     end
   end
