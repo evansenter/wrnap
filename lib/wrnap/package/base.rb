@@ -10,7 +10,7 @@ module Wrnap
       include Wrnap::Global::Yaml
 
       class_attribute :executable_name
-      self.executable_name = ->(context) { "RNA#{context.class.name.split('::').last.underscore}" }
+      self.executable_name = ->(context) { "RNA#{context.name.split('::').last.underscore}" }
 
       class_attribute :call_with
       self.call_with = [:seq]

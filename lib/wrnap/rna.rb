@@ -5,7 +5,6 @@ module Wrnap
     include Wrnap::Rna::Extensions
     include Wrnap::Rna::Wrnapper
     include Wrnap::Rna::Metadata
-    include Wrnap::Rna::Motifs
     include Wrnap::Rna::TreeFunctions
     include Wrnap::Rna::Constraints
 
@@ -44,12 +43,19 @@ module Wrnap
           comment = File.basename(string, string.include?(?.) ? ".%s" % string.split(?.)[-1] : "")
           string  = File.read(string).chomp
         end
-
-        init_from_string(*string.split(/\n/).reject { |line| line.start_with?(">") }[0, 3], &block).tap do |rna|
-          if (line = string.split(/\n/).first).start_with?(">") && !(file_comment = line.gsub(/^>\s*/, "")).empty?
-            rna.comment = file_comment
-          elsif comment
-            rna.comment = comment
+          
+        if string.count(?>) > 1
+          string.split(/>/).reject(&:empty?).map do |rna_string|
+            rna_data = rna_string.split(?\n)
+            init_from_string(*rna_data[1..-1]).copy_name_from(rna_data[0])
+          end.wrnap
+        else
+          init_from_string(*string.split(/\n/).reject { |line| line.start_with?(">") }[0, 3], &block).tap do |rna|
+            if (line = string.split(/\n/).first).start_with?(">") && !(file_comment = line.gsub(/^>\s*/, "")).empty?
+              rna.comment = file_comment
+            elsif comment
+              rna.comment = comment
+            end
           end
         end
       end
@@ -62,8 +68,8 @@ module Wrnap
         # This happens when you call a Wrnap library function with the output of something like Wrnap::Fold.run(...).mfe
         new(
           sequence:         rna.sequence,
-          strucutre:        rna.structure,
-          second_strucutre: rna.second_structure,
+          structure:        rna.structure,
+          second_structure: rna.second_structure,
           comment:          rna.comment,
           &block
         )
@@ -111,8 +117,8 @@ module Wrnap
     
     def_delegator :@sequence, :length, :len
 
-    def copy_name_from(rna)
-      tap { @comment = rna.name }
+    def copy_name_from(nameish)
+      tap { @comment = nameish.is_a?(String) ? nameish : nameish.name }
     end
 
     def empty_structure
@@ -142,15 +148,19 @@ module Wrnap
     end
 
     alias :two_str :two_structures
+    
+    def formatted_string
+      [
+        (">%s" % name  if name),
+        ("%s"  % seq   if seq),
+        ("%s"  % str_1 if str_1),
+        ("%s"  % str_2 if str_2)
+      ].compact.join(?\n)
+    end
 
     def write_fa!(filename)
       filename.tap do |filename|
-        File.open(filename, ?w) do |file|
-          file.write("> %s\n" % name) if name
-          file.write("%s\n" % seq)    if seq
-          file.write("%s\n" % str_1)  if str_1
-          file.write("%s\n" % str_2)  if str_2
-        end
+        File.open(filename, ?w) { |file| file.write(formatted_string) }
       end
     end
 
@@ -177,18 +187,14 @@ module Wrnap
     end
 
     def pp
-      puts("> %s" % name)       if name
-      puts("%s" % seq)          if seq
-      puts("%s" % str_1)        if str_1
-      puts("%s" % str_2)        if str_2
-      puts("%s" % meta.inspect) if meta
+      puts(formatted_string)
     end
-
+    
     def inspect
       "#<RNA: %s>" % [
-        ("#{seq[0, 20]   + (len          > 20 ? '... [%d]' % len : '')}" if seq   && !seq.empty?),
-        ("#{str_1[0, 20] + (str_1.length > 20 ? ' [%d]'    % len : '')}" if str_1 && !str_1.empty?),
-        ("#{str_2[0, 20] + (str_2.length > 20 ? ' [%d]'    % len : '')}" if str_2 && !str_1.empty?),
+        ("#{seq[0, 20]   + (len          > 20 ? '... [%d]' % len          : '')}" if seq   && !seq.empty?),
+        ("#{str_1[0, 20] + (str_1.length > 20 ? ' [%d]'    % str_1.length : '')}" if str_1 && !str_1.empty?),
+        ("#{str_2[0, 20] + (str_2.length > 20 ? ' [%d]'    % str_2.length : '')}" if str_2 && !str_1.empty?),
         (md.inspect unless md.nil? || md.empty?),
         (name ? name : "#{self.class.name}")
       ].compact.join(", ")

@@ -5,7 +5,7 @@ module Wrnap
         E: "/usr/local/bin/rna_turner2004.par"
       }
     
-      self.executable_name = ->(context) { context.class.name.demodulize.gsub(/^([A-Z].*)bor$/) { |match| $1.upcase + "bor" } }
+      self.executable_name = ->(context) { context.name.demodulize.gsub(/^([A-Z].*)bor$/) { |match| $1.upcase + "bor" } }
     
       def run_command(flags)
         file = Tempfile.new("rna")

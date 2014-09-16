@@ -10,6 +10,10 @@ module Wrnap
         def exec_exists?(name)
           !%x[which RNA#{name.to_s.downcase}].empty? || !%x[which #{name.to_s.downcase}].empty?
         end
+        
+        def exec_name
+          executable_name.respond_to?(:call) ? executable_name[self] : executable_name
+        end
 
         def run(*data)
           flags = data.length > 1 && data.last.is_a?(Hash) ? data.pop : {}
@@ -40,13 +44,23 @@ module Wrnap
         end
 
         def pre_run_check
-          if %x[which #{exec_name}].empty?
+          valid_to_run = if self.class.instance_variable_get(:@pre_run_checked)
+            self.class.instance_variable_get(:@valid_to_run)
+          else
+            Wrnap.debugger { "Checking existence of executable %s." % exec_name }
+            self.class.module_eval do
+              @pre_run_checked = true
+              @valid_to_run    = !%x[which #{exec_name}].empty?
+            end
+          end
+          
+          unless valid_to_run
             raise RuntimeError.new("#{exec_name} is not defined on this machine")
           end
         end
 
         def exec_name
-          executable_name.respond_to?(:call) ? executable_name[self] : executable_name
+          self.class.exec_name
         end
 
         def recursively_merge_flags(flags)

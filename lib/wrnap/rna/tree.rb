@@ -14,19 +14,84 @@ module Wrnap
       extend Forwardable
       include Enumerable
 
-      STEM_NOTATION_REGEX = /^p((\d+_)*(\d+))(_?([ijkl]))?$/
+      STEM_NOTATION_REGEX = /^[pt]_?(\d+_)*\d+(_?[ijkl])?$/
 
-      def_delegators :@content, :i, :j
+      def_delegators :@content, :i, :j, :k, :l
       def_delegator  :@content, :length, :stem_length
+      
+      def unpaired_regions
+        Wrnap.debugger { "Collecting unpaired regions for %s" % [root.content.name] }
+        
+        postorder_traversal.inject([]) do |array, node|
+          array.tap do
+            if node.is_leaf?
+              array << Loop.new(node.k + 1, node.l - 1)
+            end
+            
+            if node != self
+              if node.is_only_child?
+                Wrnap.debugger { "Interior node: %s, parent: %s" % [node.content.inspect, node.parent.content.inspect] }
+          
+                if node.i - node.parent.k > 0
+                  Wrnap.debugger { "Left bulge." }
+                  array << Loop.new(node.parent.k + 1, node.i - 1)
+                end
+          
+                if node.parent.l - node.j > 0
+                  Wrnap.debugger { "Right bulge." }
+                  array << Loop.new(node.j + 1, node.parent.l - 1)
+                end
+              else
+                node_index = node.parent.children.each_with_index.find { |child, _| child == node }.last
+              
+                if node.is_last_sibling?
+                  Wrnap.debugger { "Leaf node, last child: %s" % node.content.inspect }
+                  array << Loop.new(node.j + 1, node.parent.l - 1)
+                else
+                  if node.is_first_sibling?
+                    Wrnap.debugger { "Leaf node, first child: %s" % node.content.inspect }
+                    array << Loop.new(node.parent.k + 1, node.i - 1) 
+                  end
+                
+                  Wrnap.debugger { "Connecting node, middle child: %s" % node.content.inspect }
+                  alexa = node.siblings[node_index]
+                  array << Loop.new(node.j + 1, alexa.i - 1)
+                end
+              end
+            end            
+          end
+        end
+      end
+      
+      def detached_copy
+        self.class.new(@name, @content ? @content.clone : nil)
+      end
+      
+      def preorder_traversal(&block)
+        return enum_for(:preorder_traversal) unless block_given?
+        yield self
+        children.map { |child| child.preorder_traversal(&block) }
+      end
+      
+      def postorder_traversal(&block)
+        return enum_for(:postorder_traversal) unless block_given?
+        children.each { |child| child.postorder_traversal(&block) }
+        yield self
+      end
 
       def method_missing(name, *args, &block)
-        if name.to_s =~ STEM_NOTATION_REGEX
-          if $2 && child = children[$2.to_i - 1]
-            child.send("p%s" % name.to_s.gsub(/^p\d+_/, ""))
-          elsif child = children[$1.to_i - 1]
-            $5 ? child.content.send($5) : child.content
-          else
-            nil
+        if (method_name = name.to_s) =~ STEM_NOTATION_REGEX
+          call_type   = method_name[0]
+          indices     = method_name.gsub(/\D+/, ?_).split(?_).reject(&:empty?).map(&:to_i)
+          helix_index = method_name.match(/([ijkl])$/) ? $1 : ""
+
+          if indices.size > 1 && child = children[indices[0] - 1]
+            child.send(call_type + indices[1..-1].join(?_) + helix_index)
+          elsif child = children[indices[0] - 1]
+            case call_type
+            when ?p then helix_index.empty? ? child.content : child.send(helix_index)
+            when ?t then child
+            end
           end
         else super end
       end
@@ -85,14 +150,35 @@ module Wrnap
       def coalesce!
         tap { merge_interior_loops! }
       end
+      
+      def fuse
+        self.class.new(rna, root.dup).tap { |tree| tree.extend_interior_loops! }
+      end
 
+      def fuse!
+        tap { extend_interior_loops! }
+      end
+  
+      def extend_interior_loops!
+        handle_interior_loops! do |node, child|
+          node.content.merge!(child.content)
+          child.remove_from_parent!
+          child.children.each { |grandchild| node.add(grandchild) }
+        end
+      end
+  
       def merge_interior_loops!
+        handle_interior_loops! do |node, child|
+          node.parent.add(child)
+          node.remove_from_parent!
+        end
+      end
+      
+      def handle_interior_loops!(&block)
         root.tap do
-          self.class.postorder_traversal(root) do |node|
-            if node.children.count == 1 && !node.is_root?
-              child = node.children.first
-              node.parent.add(child)
-              node.remove_from_parent!
+          root.postorder_traversal do |node|
+            if node.children.count == 1 && !node.is_root?              
+              yield(node, node.children.first)
             end
           end
           
@@ -118,18 +204,6 @@ module Wrnap
         if name.to_s =~ TreeStem::STEM_NOTATION_REGEX
           root.send(name, *args, &block)
         else super end
-      end
-
-      class << self
-        def preorder_traversal(node, &block)
-          node.children.map { |child| preorder_traversal(child, &block) }
-          yield node
-        end
-
-        def postorder_traversal(node, &block)
-          node.children.map { |child| postorder_traversal(child, &block) }
-          yield node
-        end
       end
     end
   end

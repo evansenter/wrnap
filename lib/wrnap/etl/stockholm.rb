@@ -4,10 +4,21 @@ module Wrnap
       class << self
         def load_all(file)
           entries   = Bio::Stockholm::Reader.parse_from_file(file)[0]
-          sequences = entries.records.map(&:last).map(&:sequence)
-          structure = dot_bracket_from_stockholm(entries.gc_features["SS_cons"])
+          structure = consensus_structure_from_file(file)
 
-          sequences.map { |sequence| fit_structure_to_sequence(sequence, structure) }
+          entries.records.map do |label, record| 
+            fit_structure_to_sequence(record.sequence, structure).tap do |rna| 
+              rna.comment = if !record.gs_features.nil? && record.gs_features.is_a?(Hash)
+                record.gs_features["AC"].split(/[\/-]/).join(" ")
+              else
+                label.split(/[\/-]/).join(" ")
+              end
+            end
+          end.wrnap
+        end
+        
+        def consensus_structure_from_file(file)
+          dot_bracket_from_stockholm(Bio::Stockholm::Reader.parse_from_file(file)[0].gc_features["SS_cons"])
         end
 
         def dot_bracket_from_stockholm(structure)

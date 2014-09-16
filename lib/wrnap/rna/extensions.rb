@@ -39,8 +39,53 @@ module Wrnap
       end
 
       module InstanceMethods
+        def hamming_distance(other_rna)
+          raise "The two sequences are not the same length" unless len == other_rna.len
+          
+          [seq, other_rna.seq].map(&:each_char).map(&:to_a).transpose.select { |array| array.uniq.size > 1 }.count
+        end
+        
+        def local_structural_shuffle(dishuffle: false)
+          sequence       = " " * len
+          loops, helices = loops_and_helices
+        
+          loops.each { |loop| sequence[loop.i..loop.j] = Shuffle.new(loop.in(seq)).send(dishuffle ? :dishuffle : :shuffle) }
+          helices.each do |helix|
+            left_stem, right_stem = if dishuffle
+              Shuffle.new(helix.in(seq)).dishuffle
+            else
+              Shuffle.new(helix.in(seq)).shuffle.map { |array| rand(2).zero? ? array : array.reverse }
+            end.transpose.map(&:join)
+            
+            sequence[helix.i..helix.k] = left_stem
+            sequence[helix.l..helix.j] = right_stem.reverse
+          end
+          
+          Rna.init_from_string(sequence, str)
+        end
+        
+        def local_structural_dishuffle
+          local_structural_shuffle(dishuffle: true)
+        end
+        
+        def global_structural_shuffle
+          sequence         = " " * len
+          loops, helices   = loops_and_helices
+          shuffled_loops   = Shuffle.new(loops.map { |loop| loop.in(seq) }.join.split(//)).shuffle
+          shuffled_helices = helices.map { |helix| helix.in(seq) }.inject(&:+).shuffle.map { |array| rand(2).zero? ? array : array.reverse }
+        
+          loops.each { |loop| sequence[loop.i..loop.j] = shuffled_loops.shift(loop.length).join }
+          helices.each do |helix|
+            left_stem, right_stem      = shuffled_helices.shift(helix.length).transpose.map(&:join)
+            sequence[helix.i..helix.k] = left_stem
+            sequence[helix.l..helix.j] = right_stem.reverse
+          end
+          
+          Rna.init_from_string(sequence, str)
+        end
+        
         def dishuffle
-          self.class.shuffle(sequence, 2)
+          Rna.init_from_string(self.class.shuffle(sequence, 2))
         end
 
         def gc_content
@@ -55,6 +100,33 @@ module Wrnap
       module OneStructureBasedMethods
         def max_bp_distance(structure)
           base_pairs(structure).count + ((structure.length - 3) / 2.0).floor
+        end
+        
+        def loops_and_helices(structure)
+          [loop_regions(structure), collapsed_helices(structure, lonely_bp: true)]
+        end
+        
+        def loop_regions(structure)
+          [structure.split(//), (0...structure.length).to_a].transpose.select { |char, _| char == ?. }.inject([]) do |array, (_, index)|
+            array.tap do
+              matching_loop = array.map(&:last).each_with_index.find { |end_of_loop, _| end_of_loop + 1 == index }
+              matching_loop ? array[matching_loop[-1]][-1] += 1 : array << [index, index]
+            end
+          end.map { |loop_indices| Loop.new(*loop_indices) }
+        end
+        
+        def helices(structure)
+          unless (array = base_pairs(structure).sort_by(&:first).map(&:to_a)).empty?
+            array[1..-1].inject([[array.first]]) do |bins, (i, j)|
+              bins.tap { bins[-1][-1] == [i - 1, j + 1] ? bins[-1] << [i, j] : bins << [[i, j]] }
+            end
+          else
+            []
+          end
+        end
+
+        def collapsed_helices(structure, lonely_bp: false)
+          helices(structure).map { |((i, j), *rest)| Helix.new(i, j, rest.length + 1) }.select { |helix| lonely_bp ? helix : helix.length > 1 }
         end
 
         def base_pairs(structure)

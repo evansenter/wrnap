@@ -24,7 +24,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake"
 
   spec.add_runtime_dependency "activesupport", "~> 4.0"
-  spec.add_runtime_dependency "shuffle",       "~> 0.1"
+  spec.add_runtime_dependency "shuffle",       "~> 1.0", ">= 1.0.1"
   spec.add_runtime_dependency "rinruby",       "~> 2.0"
   spec.add_runtime_dependency "rroc",          "~> 0.1"
   spec.add_runtime_dependency "bio",           "~> 1.4"

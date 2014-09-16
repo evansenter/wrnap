@@ -2,10 +2,10 @@ module Wrnap
   module Graphing
     module R
       class << self
-        def graph(&block)
+        def graph(width: 8, height: 6, &block)
           if const_defined?(:RinRuby)
             begin
-              (yield (r_instance = RinRuby.new(false))).tap { r_instance.close }
+              generate_graph(r_instance = RinRuby.new(false), width, height, &block).tap { r_instance.close }
             rescue RuntimeError => e
               raise unless e.message == "Unsupported data type on R's end"
             end
@@ -23,11 +23,6 @@ module Wrnap
           y_range  = Range.new(y_points.map(&:min).min.floor, y_points.map(&:max).max.ceil)
 
           graph do |r|
-            r.eval("%s('%s', 6, 6)" % [
-              writing_file?(filename) ? filetype(filename) : "quartz",
-              writing_file?(filename) ? filename : "Graph",
-            ])
-
             r.assign("legend.titles", data.each_with_index.map { |hash, index| hash[:legend] || "Line #{index + 1}" })
             r.eval("line.colors <- rainbow(%d)" % data.size)
             r.eval("plot(0, 0, type = 'n', cex = .75, cex.axis = .9, xlab = '', ylab = '', xlim = c(%d, %d), ylim = c(%d, %d))" % [
@@ -73,8 +68,6 @@ module Wrnap
                 )
               STR
             end
-
-            r.eval("dev.off()") if writing_file?(filename)
           end
         end
 
@@ -115,7 +108,6 @@ module Wrnap
             end
           end
 
-
           overlay(
             formatted_data,
             title:    title,
@@ -135,11 +127,6 @@ module Wrnap
             r.assign("histogram.data", data)
             r.assign("histogram.breaks", breaks)
 
-            r.eval("%s('%s', 6, 6)" % [
-              writing_file?(filename) ? filetype(filename) : "quartz",
-              writing_file?(filename) ? filename : "Graph",
-            ])
-
             r.eval <<-STR
               hist(
                 histogram.data,
@@ -154,8 +141,6 @@ module Wrnap
             STR
 
             r.eval("abline(v = #{x_arrow}, lty = 'dashed')") if x_arrow
-
-            r.eval("dev.off()") if writing_file?(filename)
           end
         end
 
@@ -179,26 +164,22 @@ module Wrnap
                 x      = matrix.x,
                 index1 = F
                 )
+                
+                filtered.values <- Filter(function(i) { is.finite(i) & i != 0 }, matrix.x)
+                print(apply(as.matrix(matrix.data), 2, rev))
+                print(c(sort(filtered.values)[2], max(filtered.values)))
+
+                image(
+                  x    = 1:max(c(dim(matrix.data)[[1]], dim(matrix.data)[[2]])),
+                  y    = 1:max(c(dim(matrix.data)[[1]], dim(matrix.data)[[2]])),
+                  z    = as.matrix(matrix.data),
+                  col  = rev(heat.colors(#{num_colors})),
+                  zlim = #{forced_square ? "c(sort(filtered.values)[2], max(filtered.values))" : "c(min(filtered.values), max(filtered.values))"},
+                  xlab = "#{x_label} (1-indexed)",
+                  ylab = "#{y_label} (1-indexed)"
+                )
+                title(#{expressionify(title || "Matrix Heatmap")})
               STR
-
-              generate_graph("Heatmap") do
-                <<-STR
-                  filtered.values <- Filter(function(i) { is.finite(i) & i != 0 }, matrix.x)
-                  print(apply(as.matrix(matrix.data), 2, rev))
-                  print(c(sort(filtered.values)[2], max(filtered.values)))
-
-                  image(
-                    x    = 1:max(c(dim(matrix.data)[[1]], dim(matrix.data)[[2]])),
-                    y    = 1:max(c(dim(matrix.data)[[1]], dim(matrix.data)[[2]])),
-                    z    = as.matrix(matrix.data),
-                    col  = rev(heat.colors(#{num_colors})),
-                    zlim = #{forced_square ? "c(sort(filtered.values)[2], max(filtered.values))" : "c(min(filtered.values), max(filtered.values))"},
-                    xlab = "#{x_label} (1-indexed)",
-                    ylab = "#{y_label} (1-indexed)"
-                  )
-                  title(#{expressionify(title || "Matrix Heatmap")})
-                STR
-              end
             else
               puts "Please install the Matrix package for R before using this function."
             end
@@ -207,15 +188,17 @@ module Wrnap
 
         private
 
-        def generate_graph(window_title = "ViennaRNA Graph in R", &block)
-          r, filename = block.binding.eval("[r, filename]")
+        def generate_graph(r, width, height, &block)
+          filename = block.binding.eval("filename")
 
-          r.eval("%s('%s', 6, 6)" % [
+          r.eval("%s('%s', %d, %d)" % [
             writing_file?(filename) ? filetype(filename) : "quartz",
             writing_file?(filename) ? filename : "Graph",
+            width,
+            height
           ])
 
-          r.eval(yield)
+          yield r
 
           r.eval("dev.off()") if writing_file?(filename)
         end
