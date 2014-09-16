@@ -1,14 +1,16 @@
 module Wrnap
   class Rna
     class Context < Rna
+      extend Forwardable
+      
       attr_reader :accession, :from, :to, :coord_options
 
       class << self
         def init_from_entrez(accession, from, to, options = {}, &block)
           new(
             accession: accession,
-            from:      from,
-            to:        to,
+            from:      from.to_i,
+            to:        to.to_i,
             options:   options,
             &block
           )
@@ -18,8 +20,8 @@ module Wrnap
           new(
             sequence:  sequence,
             accession: accession,
-            from:      from,
-            to:        to,
+            from:      from.to_i,
+            to:        to.to_i,
             options:   options,
             &block
           )
@@ -102,7 +104,7 @@ module Wrnap
       end
 
       alias :seq :sequence
-
+      
       def_delegator :@raw_sequence, :length, :len
 
       def extend!(coord_options = {})
@@ -128,13 +130,21 @@ module Wrnap
           range
         end
       end
-
+      
       def identifier
-        "%s %d %s %d" % [accession, from, plus_strand? ? ?+ : ?-, to]
+        "%s %d %s %d" % [accession, seq_from, plus_strand? ? ?+ : ?-, seq_to]
+      end
+      
+      def _id
+        identifier.gsub(/[^A-Z0-9]/, ?_).gsub(/__+/, ?_)
       end
 
       def inspect
-        super.gsub(/((\w(::)?)+)>$/) { |_| "%s %s>" % [identifier, $1] }
+        if super.match(/Wrnap::(\w+(::)?)+>$/)
+          super.sub(/([\w:]+)>$/) { |_| "%s %s>" % [identifier, $1] }
+        else
+          super
+        end
       end
     end
   end
