@@ -9,6 +9,10 @@ module Wrnap
         def constraint_mask
           md[:constraint_mask]
         end
+        
+        def show_constraints(&block)
+          ConstraintBox.new(metadata.__rna__).tap { |box| box.instance_eval(&block) }.to_s
+        end
 
         def build_constraints(&block)
           meta_rna do |metadata|
@@ -23,6 +27,10 @@ module Wrnap
         def initialize(rna)
           @rna, @constraints = rna, []
         end
+        
+        def n
+          rna.len - 1
+        end
 
         def between(i, j)
           Loop.new(i, j)
@@ -32,10 +40,25 @@ module Wrnap
           between(i + 1, j - 1)
         end
         
+        def start_to(i)
+          between(0, i)
+        end
+        
+        def end_to(i)
+          between(i, n)
+        end
+        
+        def freeze(mask_object)
+          force mask_object
+          prohibit mask_object.unpaired_regions
+        end
+        
         def mask!(mask_object, *args)
           case mask_object
-          when Helix then mask_helix!(mask_object, *args)
-          when Loop  then mask_loop!(mask_object, symbol: args[0][:symbol])
+          when TreeStem then mask_object.preorder_traversal { |node| mask!(node.content, *args) }
+          when Array    then mask_object.map { |node| mask!(node, *args) }
+          when Helix    then mask_helix!(mask_object, *args)
+          when Loop     then mask_loop!(mask_object, symbol: args[0][:symbol])
           end
         end
 

@@ -57,6 +57,33 @@ module Wrnap
           base_pairs(structure).count + ((structure.length - 3) / 2.0).floor
         end
 
+        def loops_and_helices(structure)
+          [loop_regions(structure), collapsed_helices(structure, lonely_bp: true)]
+        end
+
+        def loop_regions(structure)
+          [structure.split(//), (0...structure.length).to_a].transpose.select { |char, _| char == ?. }.inject([]) do |array, (_, index)|
+            array.tap do
+              matching_loop = array.map(&:last).each_with_index.find { |end_of_loop, _| end_of_loop + 1 == index }
+              matching_loop ? array[matching_loop[-1]][-1] += 1 : array << [index, index]
+            end
+          end.map { |loop_indices| Loop.new(*loop_indices) }
+        end
+
+        def helices(structure)
+          unless (array = base_pairs(structure).sort_by(&:first).map(&:to_a)).empty?
+            array[1..-1].inject([[array.first]]) do |bins, (i, j)|
+              bins.tap { bins[-1][-1] == [i - 1, j + 1] ? bins[-1] << [i, j] : bins << [[i, j]] }
+            end
+          else
+            []
+          end
+        end
+
+        def collapsed_helices(structure, lonely_bp: false)
+          helices(structure).map { |((i, j), *rest)| Helix.new(i, j, rest.length + 1) }.select { |helix| lonely_bp ? helix : helix.length > 1 }
+        end
+
         def base_pairs(structure)
           get_pairings(structure).each_with_index.inject(Set.new) do |set, (j, i)|
             j >= 0 ? set << Set[i, j] : set

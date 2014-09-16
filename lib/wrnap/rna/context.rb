@@ -103,6 +103,8 @@ module Wrnap
 
       alias :seq :sequence
 
+      def_delegator :@raw_sequence, :length, :len
+
       def extend!(coord_options = {})
         self.class.init_from_entrez(accession, from, to, coords: coord_options)
       end

@@ -1,23 +1,5 @@
 module Wrnap
-  class Rna
-    module Motifs
-      def helices
-        array = base_pairs.sort_by(&:first).map(&:to_a)
-
-        unless array.empty?
-          array[1..-1].inject([[array.first]]) do |bins, (i, j)|
-            bins.tap { bins[-1][-1] == [i - 1, j + 1] ? bins[-1] << [i, j] : bins << [[i, j]] }
-          end
-        else
-          []
-        end
-      end
-
-      def collapsed_helices(lonely_bp: false)
-        helices.map { |((i, j), *rest)| Helix.new(i, j, rest.length + 1) }.select { |helix| lonely_bp ? helix : helix.length > 1 }
-      end
-    end
-
+  class Rna    
     class Helix
       attr_reader :i, :j, :length
 
@@ -28,8 +10,25 @@ module Wrnap
       def k; i + length - 1; end
       def l; j - length + 1; end
       
+      def in(sequence)
+        (0...length).map do |stem_position|
+          [sequence[i + stem_position], sequence[j - stem_position]]
+        end
+      end
+      
       def to_loops
         [Loop.new(i, k), Loop.new(l, j)]
+      end
+      
+      def apply!(structure)
+        structure.tap do
+          structure[i, length] = ?( * length
+          structure[l, length] = ?) * length
+        end
+      end
+      
+      def merge!(helix)
+        @length = helix.k - i + 1
       end
 
       def reindex!(rna)
@@ -45,7 +44,7 @@ module Wrnap
       end
 
       def name
-        "(%d..%d, %d..%d)" % [i, k, l, j]
+        "(%d..%d, %d..%d [%d])" % [i, k, l, j, length]
       end
 
       def inspect
@@ -60,8 +59,16 @@ module Wrnap
         @i, @j = i, j
       end
       
+      def in(sequence)
+        sequence[i..j]
+      end
+      
+      def length
+        j - i + 1
+      end
+      
       def name
-        "(%d, %d)" % [i, j]
+        "(%d, %d [%d])" % [i, j, length]
       end
       
       def inspect

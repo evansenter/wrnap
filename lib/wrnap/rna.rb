@@ -5,7 +5,6 @@ module Wrnap
     include Wrnap::Rna::Extensions
     include Wrnap::Rna::Wrnapper
     include Wrnap::Rna::Metadata
-    include Wrnap::Rna::Motifs
     include Wrnap::Rna::TreeFunctions
     include Wrnap::Rna::Constraints
 
