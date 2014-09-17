@@ -34,7 +34,13 @@ module Wrnap
       def_delegators :@rnas, *%i|size length first last [] []= <<|
 
       def each(&block)
+        return enum_for(:each) unless block_given?
         rnas.each(&block)
+      end
+      
+      def run_in_parallel(method, *args)
+        Wrnap.debug, debug_status = false, Wrnap.debug
+        Parallel.map(self, progress: "Calling %s on %d RNAs" % [method, rnas.size]) { |rna| rna.send(method, *args) }.tap { Wrnap.debug = debug_status }
       end
 
       def kind_of?(klass)
@@ -43,7 +49,7 @@ module Wrnap
       
       def method_missing(name, *args, &block)
         if (name_str = "#{name}") =~ /^run_\w+$/
-          map { |rna| rna.send(name, *args) }
+          run_in_parallel(name_str, *args)
         else super end
       end
 
