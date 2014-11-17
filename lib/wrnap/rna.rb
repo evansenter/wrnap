@@ -75,7 +75,18 @@ module Wrnap
           structures: rna.structures,
           comment:    rna.comment,
           &block
-        )
+        ).tap do |new_rna|
+          new_rna.instance_variable_set(:@metadata, rna.metadata)
+        end
+      end
+      
+      def init_from_old_rna_object(rna)
+        init_from_self(rna).tap do |new_rna|
+          new_rna.instance_variable_set(:@structures, [
+            rna.instance_variable_get(:@structure),
+            rna.instance_variable_get(:@second_structure)
+          ].compact)
+        end
       end
 
       alias_method :placeholder, :new

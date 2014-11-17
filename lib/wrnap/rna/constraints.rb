@@ -1,3 +1,5 @@
+require File.join(File.dirname(__FILE__), "tree.rb")
+
 module Wrnap
   class Rna
     module Constraints
@@ -22,6 +24,8 @@ module Wrnap
       end
 
       class ConstraintBox
+        prepend MetaMissing
+        
         attr_reader :rna, :constraints
 
         def initialize(rna)
@@ -100,21 +104,19 @@ module Wrnap
           end
         end
         
-        alias :mask :to_s
+        alias_method :mask, :to_s
 
-        def method_missing(name, *args, &block)
-          method_name = name.to_s
+        handle_methods_like(TreeStem::STEM_NOTATION_REGEX) do |match, name, *args, &block|
+          rna.trunk.send(name.to_s)
+        end
+        
+        handle_methods_like(/^(prohibit|force)(_(left|right)_stem)?$/) do |match, name, *args, &block|
+          side_symbol = match[3] ? match[3].to_sym : :both
           
-          if method_name =~ TreeStem::STEM_NOTATION_REGEX
-            rna.trunk.send(method_name)
-          elsif mask_type = method_name.match(/^(prohibit|force)(_(left|right)_stem)?$/)
-            side_symbol = mask_type[3] ? mask_type[3].to_sym : :both
-
-            case mask_type[1]
-            when "prohibit" then mask!(args[0], side: side_symbol, symbol: args[1] || ?x)
-            when "force"    then mask!(args[0], side: side_symbol, symbol: args[1] || "()")
-            end
-          else super end
+          case match[1]
+          when "prohibit" then mask!(args[0], side: side_symbol, symbol: args[1] || ?x)
+          when "force"    then mask!(args[0], side: side_symbol, symbol: args[1] || "()")
+          end
         end
       end
 

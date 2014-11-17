@@ -28,11 +28,9 @@ module Wrnap
           @__rna__, @__data__ = rna, {}
         end
 
-        def inspect
+        alias_method :to_s, def inspect
           "#<Metadata: %s>" % __data__.inspect
         end
-
-        alias :to_s :inspect
 
         def method_missing(name, *args, &block)
           case args.size

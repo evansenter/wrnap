@@ -1,6 +1,7 @@
 module Wrnap
   class Rna
     class Box
+      prepend MetaMissing
       extend Forwardable
       include Enumerable
       include Wrnap::Global::Yaml
@@ -47,10 +48,8 @@ module Wrnap
         klass == Array ? true : super
       end
       
-      def method_missing(name, *args, &block)
-        if (name_str = "#{name}") =~ /^run_\w+$/
-          run_in_parallel(name_str, *args)
-        else super end
+      handle_methods_like(/^run_\w+$/) do |match, name, *args, &block|
+        run_in_parallel(name, *args)
       end
 
       def inspect

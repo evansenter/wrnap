@@ -94,7 +94,7 @@ module Wrnap
         !plus_strand?
       end
 
-      def sequence
+      alias_method :seq, def sequence
         if @raw_sequence
           @raw_sequence
         else
@@ -102,8 +102,6 @@ module Wrnap
           @raw_sequence   = (minus_strand? ? entrez_sequence.complement : entrez_sequence).upcase
         end
       end
-
-      alias :seq :sequence
       
       def_delegator :@raw_sequence, :length, :len
 
