@@ -10,7 +10,10 @@ module Wrnap
 
       class << self
         def load_all(pattern = "*.fa", &block)
-          new(Dir[File.directory?(pattern) ? pattern + "/*.fa" : pattern].inject([]) { |array, file| array + RNA.from_fasta(file, &block).rnas })
+          new(Dir[File.directory?(pattern) ? File.join(pattern, "*.fa") : pattern].inject([]) do |array, file| 
+            loaded_rnas = RNA.from_fasta(file, &block)
+            array + (loaded_rnas.is_a?(Box) ? loaded_rnas.rnas : [loaded_rnas])
+          end)
         end
       end
 
