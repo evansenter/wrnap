@@ -11,7 +11,7 @@ module Wrnap
           "-fftbor2d-i" => context.data.seq,
           "-fftbor2d-j" => context.data.str_1,
           "-fftbor2d-k" => context.data.str_2,
-          "-mfpt-x"     => true
+          "X"           => true
         }
       end
       self.quote_flag_params = %w|-fftbor2d-i -fftbor2d-j -fftbor2d-k|

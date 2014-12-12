@@ -8,12 +8,13 @@ module Wrnap
           "-fftbor2d-i"   => context.data.seq,
           "-fftbor2d-j"   => context.data.str_1,
           "-fftbor2d-k"   => context.data.str_2,
-          "-population-e" => 1e-4
+          "-population-q" => true
         }
       end
 
       def post_process
-        @equilibrium = (response.empty? || response =~ /Infinity/ ? -1 : 10 ** response.strip.to_f)
+        raw_eq_time  = (response.match(/index\tlogtime\n\d+\t(.*)\n/) || [])[1] || ""
+        @equilibrium = (raw_eq_time =~ /^(|-?Infinity)$/ ? -1 : 10 ** raw_eq_time.to_f)
       end
     end
   end
