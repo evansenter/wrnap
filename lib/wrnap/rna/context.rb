@@ -40,10 +40,9 @@ module Wrnap
         end
 
         super(
-          sequence:         self.sequence,
-          structure:        options[:rna][:structure]        || options[:rna][:str_1] || options[:rna][:str],
-          second_structure: options[:rna][:second_structure] || options[:rna][:str_2],
-          comment:          options[:rna][:comment]          || options[:rna][:name] || identifier,
+          sequence:   self.sequence,
+          structures: options[:rna][:structures] || options[:rna][:structure] || options[:rna][:strs] || options[:rna][:str],
+          comment:    options[:rna][:comment] || options[:rna][:name] || identifier,
           &block
         )
 
