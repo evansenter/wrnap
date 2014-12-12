@@ -20,6 +20,10 @@ module Wrnap
       def_delegators :@content, :i, :j, :k, :l
       def_delegator  :@content, :length, :stem_length
       
+      def in(sequence)
+        sequence[i..j]
+      end
+      
       def unpaired_regions
         Wrnap.debugger { "Collecting unpaired regions for %s" % [root.content.name] }
         
@@ -146,7 +150,7 @@ module Wrnap
       end
 
       def coalesce
-        self.class.new(rna, root.dup).tap { |tree| tree.merge_interior_loops! }
+        self.class.new(rna, root.clone).tap { |tree| tree.merge_interior_loops! }
       end
 
       def coalesce!
@@ -154,7 +158,7 @@ module Wrnap
       end
       
       def fuse
-        self.class.new(rna, root.dup).tap { |tree| tree.extend_interior_loops! }
+        self.class.new(rna, root.clone).tap { |tree| tree.extend_interior_loops! }
       end
 
       def fuse!
