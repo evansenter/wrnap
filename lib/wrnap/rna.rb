@@ -76,7 +76,7 @@ module Wrnap
           comment:    rna.comment,
           &block
         ).tap do |new_rna|
-          new_rna.instance_variable_set(:@metadata, rna.metadata)
+          new_rna.instance_variable_set(:@metadata, rna.metadata.clone)
         end
       end
       
@@ -95,7 +95,7 @@ module Wrnap
     def initialize(sequence: "", structures: [], comment: "", &block)
       @sequence   = (sequence.kind_of?(Rna) ? sequence.seq : sequence).upcase
       @comment    = comment
-      @metadata   = Metadata::Container.new(self)      
+      @metadata   = Metadata::Container.new(self)
       @structures = (structures ? [structures].flatten : []).each_with_index.map do |structure, i|
         case structure
         when :empty, :empty_str then empty_structure
@@ -138,7 +138,7 @@ module Wrnap
     end
 
     alias_method :no_str, def no_structure
-      self.class.init_from_string(seq, nil, name)
+      self.class.init_from_string(seq, name)
     end
 
     alias_method :one_str, def one_structure(structure_1)
@@ -163,7 +163,7 @@ module Wrnap
 
     def write_fa!(filename)
       filename.tap do |filename|
-        File.open(filename, ?w) { |file| file.write(formatted_string) }
+        File.open(filename, ?w) { |file| file.write(formatted_string + ?\n) }
       end
     end
 
