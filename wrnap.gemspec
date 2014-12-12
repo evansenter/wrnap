@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.version       = Wrnap::VERSION
   spec.authors       = ["Evan Senter"]
   spec.email         = ["evansenter@gmail.com"]
-  spec.summary       = %q{A comprehensive wrapper (wRNApper) for various RNA CLI programs.}
+  spec.summary       = %q{A comprehensive wrapper w(RNA)pper for various RNA CLI programs.}
   spec.description   = %q{}
   spec.homepage      = ""
   spec.license       = "MIT"
@@ -20,13 +20,17 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = ">= 2.0"
 
-  spec.add_development_dependency "bundler", "~> 1.6"
-  spec.add_development_dependency "rake"
+  spec.add_development_dependency "awesome_print", "~> 1.2.0"
+  spec.add_development_dependency "bundler",       "~> 1.7"
+  spec.add_development_dependency "gem-release",   "~> 0.7", ">= 0.7.3"
+  spec.add_development_dependency "rake",          "~> 10.0"
 
   spec.add_runtime_dependency "activesupport",    "~> 4.0"
   spec.add_runtime_dependency "bio",              "~> 1.4"
   spec.add_runtime_dependency "bio-stockholm",    "~> 0.0.1"
   spec.add_runtime_dependency "entrez",           "~> 0.5"
+  spec.add_runtime_dependency "meta_missing",     "~> 0.3.0"
+  spec.add_runtime_dependency "numbers_in_words", "~> 0.2.0"
   spec.add_runtime_dependency "parallel",         "~> 1.3", ">= 1.3.2"
   spec.add_runtime_dependency "rinruby",          "~> 2.0"
   spec.add_runtime_dependency "rroc",             "~> 0.1"

@@ -46,6 +46,11 @@ module Wrnap
         end
         
         def local_structural_shuffle(dishuffle: false)
+          # Permutes the base pairs of the structure provided for the template sequence independently of the unpaired regions, as in
+          # global_structural_shuffle. This adds the additional constraint that loops and helices are permuted as individual sets,
+          # rather than using two global loop / helix bags.
+          raise "the structural_shuffle functions require the initial RNA to have a structure" unless str
+          
           sequence       = " " * len
           loops, helices = loops_and_helices
         
@@ -69,6 +74,10 @@ module Wrnap
         end
         
         def global_structural_shuffle
+          # Permutes the nucleotides of the sequence such that the basepairs in the initial structure are shuffled independently of the
+          # unpaired bases. This ensures that the resulting sequence is compatible with the original structure.
+          raise "the structural_shuffle functions require the initial RNA to have a structure" unless str
+          
           sequence         = " " * len
           loops, helices   = loops_and_helices
           shuffled_loops   = Shuffle.new(loops.map { |loop| loop.in(seq) }.join.split(//)).shuffle

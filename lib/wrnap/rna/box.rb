@@ -1,6 +1,7 @@
 module Wrnap
   class Rna
     class Box
+      prepend MetaMissing
       extend Forwardable
       include Enumerable
       include Wrnap::Global::Yaml
@@ -9,7 +10,10 @@ module Wrnap
 
       class << self
         def load_all(pattern = "*.fa", &block)
-          new(Dir[File.directory?(pattern) ? pattern + "/*.fa" : pattern].inject([]) { |array, file| array + RNA.from_fasta(file, &block).rnas })
+          new(Dir[File.directory?(pattern) ? File.join(pattern, "*.fa") : pattern].inject([]) do |array, file| 
+            loaded_rnas = RNA.from_fasta(file, &block)
+            array + (loaded_rnas.is_a?(Box) ? loaded_rnas.rnas : [loaded_rnas])
+          end)
         end
       end
 
@@ -47,10 +51,8 @@ module Wrnap
         klass == Array ? true : super
       end
       
-      def method_missing(name, *args, &block)
-        if (name_str = "#{name}") =~ /^run_\w+$/
-          run_in_parallel(name_str, *args)
-        else super end
+      handle_methods_like(/^run_\w+$/) do |match, name, *args, &block|
+        run_in_parallel(name, *args)
       end
 
       def inspect

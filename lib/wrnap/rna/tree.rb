@@ -11,6 +11,7 @@ module Wrnap
     end
 
     class TreeStem < Tree::TreeNode
+      prepend MetaMissing
       extend Forwardable
       include Enumerable
 
@@ -18,6 +19,10 @@ module Wrnap
 
       def_delegators :@content, :i, :j, :k, :l
       def_delegator  :@content, :length, :stem_length
+      
+      def in(sequence)
+        sequence[i..j]
+      end
       
       def unpaired_regions
         Wrnap.debugger { "Collecting unpaired regions for %s" % [root.content.name] }
@@ -78,26 +83,27 @@ module Wrnap
         children.each { |child| child.postorder_traversal(&block) }
         yield self
       end
+      
+      handle_methods_like(STEM_NOTATION_REGEX) do |match, name, *args, &block|
+        method_name = name.to_s
+        call_type   = method_name[0]
+        indices     = method_name.gsub(/\D+/, ?_).split(?_).reject(&:empty?).map(&:to_i)
+        helix_index = method_name.match(/([ijkl])$/) ? $1 : ""
 
-      def method_missing(name, *args, &block)
-        if (method_name = name.to_s) =~ STEM_NOTATION_REGEX
-          call_type   = method_name[0]
-          indices     = method_name.gsub(/\D+/, ?_).split(?_).reject(&:empty?).map(&:to_i)
-          helix_index = method_name.match(/([ijkl])$/) ? $1 : ""
-
-          if indices.size > 1 && child = children[indices[0] - 1]
-            child.send(call_type + indices[1..-1].join(?_) + helix_index)
-          elsif child = children[indices[0] - 1]
-            case call_type
-            when ?p then helix_index.empty? ? child.content : child.send(helix_index)
-            when ?t then child
-            end
+        if indices.size > 1 && child = children[indices[0] - 1]
+          child.send(call_type + indices[1..-1].join(?_) + helix_index)
+        elsif child = children[indices[0] - 1]
+          case call_type
+          when ?p then helix_index.empty? ? child.content : child.send(helix_index)
+          when ?t then child
           end
-        else super end
+        end
       end
     end
 
     class TreePlanter
+      prepend MetaMissing
+      
       attr_reader :rna, :root
 
       def initialize(rna, tree = false)
@@ -144,7 +150,7 @@ module Wrnap
       end
 
       def coalesce
-        self.class.new(rna, root.dup).tap { |tree| tree.merge_interior_loops! }
+        self.class.new(rna, root.clone).tap { |tree| tree.merge_interior_loops! }
       end
 
       def coalesce!
@@ -152,7 +158,7 @@ module Wrnap
       end
       
       def fuse
-        self.class.new(rna, root.dup).tap { |tree| tree.extend_interior_loops! }
+        self.class.new(rna, root.clone).tap { |tree| tree.extend_interior_loops! }
       end
 
       def fuse!
@@ -194,16 +200,12 @@ module Wrnap
         root.print_tree and nil
       end
 
-      def inspect
+      alias_method :to_s, def inspect
         "#<TreePlanter: %s>" % depth_signature.inspect
       end
-
-      alias :to_s :inspect
-
-      def method_missing(name, *args, &block)
-        if name.to_s =~ TreeStem::STEM_NOTATION_REGEX
-          root.send(name, *args, &block)
-        else super end
+      
+      handle_methods_like(TreeStem::STEM_NOTATION_REGEX) do |match, name, *args, &block|
+        root.send(name, *args, &block)
       end
     end
   end
