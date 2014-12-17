@@ -69,6 +69,8 @@ module Wrnap
       end
       
       def detached_copy
+        # The implementation of this in RubyTree explicitly returns a new Tree::TreeNode instance rather than self.class.new, so we
+        # maintain ducktyping by intercepting the method.
         self.class.new(@name, @content ? @content.clone : nil)
       end
       

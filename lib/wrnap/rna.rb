@@ -68,27 +68,6 @@ module Wrnap
         Context.init_from_entrez(*context, coords: coords, rna: rna, &block)
       end
 
-      def init_from_self(rna, &block)
-        # This happens when you call a Wrnap library function with the output of something like Wrnap::Fold.run(...).mfe
-        new(
-          sequence:   rna.sequence,
-          structures: rna.structures,
-          comment:    rna.comment,
-          &block
-        ).tap do |new_rna|
-          new_rna.instance_variable_set(:@metadata, rna.metadata.clone)
-        end
-      end
-      
-      def init_from_old_rna_object(rna)
-        init_from_self(rna).tap do |new_rna|
-          new_rna.instance_variable_set(:@structures, [
-            rna.instance_variable_get(:@structure),
-            rna.instance_variable_get(:@second_structure)
-          ].compact)
-        end
-      end
-
       alias_method :placeholder, :new
     end
 
@@ -194,6 +173,10 @@ module Wrnap
         (md.inspect unless md.nil? || md.empty?),
         (name ? name : "#{self.class.name}")
       ].compact.join(", ")
+    end
+    
+    def clone
+      Marshal.load(Marshal.dump(self))
     end
     
     handle_methods_like(/^str(ucture)?_(\d+)$/) do |match, name, *args, &block|
