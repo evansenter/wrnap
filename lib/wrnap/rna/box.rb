@@ -7,6 +7,7 @@ module Wrnap
       include Wrnap::Global::Yaml
 
       attr_reader :rnas
+      attr_accessor :name
 
       class << self
         def load_all(pattern = "*.fa", &block)
@@ -17,8 +18,8 @@ module Wrnap
         end
       end
 
-      def initialize(rnas)
-        @rnas = rnas.kind_of?(Array) ? rnas : [rnas]
+      def initialize(rnas, name = "")
+        @rnas, @name = rnas.kind_of?(Array) ? rnas : [rnas], name
       end
       
       def write_fa!(filename)
@@ -56,7 +57,7 @@ module Wrnap
       end
 
       def inspect
-        "#<Wrnap::Rna::Box with %d RNAs>" % rnas.size
+        ("#<Wrnap::Rna::Box %s with %d RNAs>" % [name, rnas.size]).gsub(/\s\s+/, " ")
       end
     end
   end

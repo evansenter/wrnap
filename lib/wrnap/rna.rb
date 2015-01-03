@@ -175,10 +175,6 @@ module Wrnap
       ].compact.join(", ")
     end
     
-    def clone
-      Marshal.load(Marshal.dump(self))
-    end
-    
     handle_methods_like(/^str(ucture)?_(\d+)$/) do |match, name, *args, &block|
       structures[match[2].to_i - 1]
     end
