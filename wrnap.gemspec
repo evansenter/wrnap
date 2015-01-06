@@ -37,4 +37,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "ruby-progressbar", "~> 1.5", ">= 1.5.1"
   spec.add_runtime_dependency "rubytree",         "~> 0.9"
   spec.add_runtime_dependency "shuffle",          "~> 1.0", ">= 1.0.1"
+  spec.add_runtime_dependency "virtus",           "~> 1.0", ">= 1.0.4"
 end
