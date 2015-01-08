@@ -6,6 +6,8 @@ module Wrnap
         base.extend(ClassMethods)
         base.extend(TwoStructureBasedMethods)
         base.class_eval do
+          const_set(:CANONICAL_BASES, Set.new([Set.new([?G, ?C]), Set.new([?A, ?U]), Set.new([?G, ?U])]))
+          
           TwoStructureBasedMethods.public_instance_methods.each do |class_method|
             define_method(class_method) do |*args|
               self.class.send(class_method, *[str_1, str_2].concat(args))

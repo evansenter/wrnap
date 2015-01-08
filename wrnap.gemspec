@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest-reporters", "~> 1.0"
   
   spec.add_runtime_dependency "activesupport",    "~> 4.0"
+  spec.add_runtime_dependency "autoloaded",       "~> 2.0", ">= 2.0.0"
   spec.add_runtime_dependency "bio",              "~> 1.4"
   spec.add_runtime_dependency "bio-stockholm",    "~> 0.0.1"
   spec.add_runtime_dependency "entrez",           "~> 0.5"

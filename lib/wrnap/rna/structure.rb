@@ -2,6 +2,7 @@ module Wrnap
   class Rna
     class Structure
       include Virtus.value_object(strict: true)
+      include Wrnap::Rna::Tree
 
       values do
         attribute :base_pairs, SortedSet
@@ -55,6 +56,9 @@ module Wrnap
         end
       end
       
+      alias_method :bps, :base_pairs
+      alias_method :len, :length
+      
       def as_string
         @as_string ||= self.class.as_string(self)
       end
@@ -81,7 +85,7 @@ module Wrnap
       end
       
       def inspect
-        "#<Structure: %s>" % (as_string[0, 20] + (length > 20 ? " [%d]" % length : ""))
+        "#<Structure: %s%s>" % [as_string[0, 20], length > 20 ? " [%d]" % length : ""]
       end
       
       private

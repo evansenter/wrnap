@@ -15,6 +15,16 @@ module Wrnap
         assert_equal "...(((...)))...", Structure.init_from_bp_list(SortedSet.new([[3, 11], [4, 10], [5, 9]]), 15).as_string
       end
       
+      def test_accessors
+        base_pairs = SortedSet.new([[3, 11], [4, 10], [5, 9]])
+        structure  = Structure.init_from_bp_list(base_pairs, 15)
+        
+        assert_equal base_pairs, structure.base_pairs
+        assert_equal base_pairs, structure.bps
+        assert_equal 15,         structure.length
+        assert_equal 15,         structure.len
+      end
+      
       def test_equality
         assert_equal Structure.init_from_dot_bracket("...(((...)))..."), Structure.init_from_bp_list(SortedSet.new([[3, 11], [4, 10], [5, 9]]), 15)
       end

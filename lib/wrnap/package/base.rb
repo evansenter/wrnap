@@ -1,9 +1,5 @@
 module Wrnap
   module Package
-    def self.lookup(package_name)
-      const_missing("#{package_name}".camelize) || raise(ArgumentError.new("#{package_name} can't be resolved as an executable"))
-    end
-
     class Base
       include Wrnap::Global::Runner
       include Wrnap::Global::Chainer

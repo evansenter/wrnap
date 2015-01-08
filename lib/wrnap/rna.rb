@@ -1,5 +1,7 @@
 module Wrnap
   class Rna
+    Autoloaded.class {}
+    
     prepend SequenceInitializer
     prepend MetaMissing
     extend Forwardable
@@ -7,11 +9,7 @@ module Wrnap
     include Wrnap::Global::Yaml
     include Wrnap::Rna::Extensions
     include Wrnap::Rna::Wrnapper
-    include Wrnap::Rna::Metadata
-    include Wrnap::Rna::TreeFunctions
     include Wrnap::Rna::Constraints
-
-    CANONICAL_BASES = Set.new << Set.new([?G, ?C]) << Set.new([?A, ?U]) << Set.new([?G, ?U])
     
     values do
       attribute :sequence,   SequenceWrapper
@@ -79,6 +77,7 @@ module Wrnap
     alias_method :seq,  :sequence
     alias_method :strs, :structures
     alias_method :name, :comment
+    alias_method :md,   :metadata
     
     def_delegator :@sequence,   :length, :len
     def_delegator :@structures, :first,  :structure
