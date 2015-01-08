@@ -1,7 +1,9 @@
 module Wrnap
   class Rna
+    prepend SequenceInitializer
     prepend MetaMissing
     extend Forwardable
+    include Virtus.value_object(strict: true)
     include Wrnap::Global::Yaml
     include Wrnap::Rna::Extensions
     include Wrnap::Rna::Wrnapper
@@ -10,32 +12,25 @@ module Wrnap
     include Wrnap::Rna::Constraints
 
     CANONICAL_BASES = Set.new << Set.new([?G, ?C]) << Set.new([?A, ?U]) << Set.new([?G, ?U])
-
-    attr_accessor :comment
-    attr_reader   :sequence, :structures, :metadata
+    
+    values do
+      attribute :sequence,   SequenceWrapper
+      attribute :structures, Array[StructureWrapper]
+      attribute :comment,    String,                 default: ""
+      attribute :metadata,   Hash[Symbol => Object], default: {}
+    end
 
     class << self
-      def init_from_string(sequence, *remaining_args, &block)
-        init_from_hash(parse_rna_attributes(sequence, remaining_args), &block)
-      end
-      
-      def parse_rna_attributes(sequence, attributes = [])
-        last_arg = (attributes = attributes.flatten).last
-        
-        if last_arg.is_a?(Symbol) || Regexp.compile("^[\\.\\(\\)]{%d}$" % sequence.length) =~ last_arg
-          { seq: sequence, strs: attributes }
-        else
-          { seq: sequence, strs: attributes[0..-2], comment: last_arg }
-        end
-      end
-
       def init_from_hash(hash, &block)
-        new(
+        new({
           sequence:   hash[:sequence]   || hash[:seq],
           structures: hash[:structures] || hash[:structure] || hash[:strs] || hash[:str],
-          comment:    hash[:comment]    || hash[:name],
-          &block
-        )
+          comment:    hash[:comment]    || hash[:name]
+        }.select { |_, value| value }, &block)
+      end
+      
+      def init_from_string(sequence, *remaining_args, &block)
+        init_from_hash(parse_rna_attributes(sequence, remaining_args), &block)
       end
 
       def init_from_array(array, &block)
@@ -67,33 +62,18 @@ module Wrnap
       def init_from_context(*context, coords: {}, rna: {}, &block)
         Context.init_from_entrez(*context, coords: coords, rna: rna, &block)
       end
-
-      alias_method :placeholder, :new
-    end
-
-    def initialize(sequence: "", structures: [], comment: "", &block)
-      @sequence   = (sequence.kind_of?(Rna) ? sequence.seq : sequence).upcase
-      @comment    = comment
-      @metadata   = Metadata::Container.new(self)
-      @structures = (structures ? [structures].flatten : []).each_with_index.map do |structure, i|
-        case structure
-        when :empty, :empty_str then empty_structure
-        when :mfe   then RNA(@sequence).run(:fold).mfe_rna.structure
-        when String then structure
-        when Hash   then
-          if structure.keys.count > 1
-            Wrnap.debugger { "The following options hash has more than one key. This will probably produce unpredictable results: %s" % structure.inspect }
-          end
-
-          RNA(@sequence).run(*structure.keys, *structure.values).mfe_rna.structure
-        end.tap do |parsed_structure|
-          if parsed_structure.length != len
-            Wrnap.debugger { "The sequence length (%d) doesn't match the structure length at index %d (%d)" % [len, i, parsed_structure.length] }
-          end
+      
+      private
+      
+      def parse_rna_attributes(sequence, attributes = [])
+        last_arg = (attributes = attributes.flatten).last
+        
+        if last_arg.is_a?(Symbol) || Regexp.compile("^[\\.\\(\\)]{%d}$" % sequence.length) =~ last_arg
+          { seq: sequence, strs: attributes }
+        else
+          { seq: sequence, strs: attributes[0..-2], comment: last_arg }
         end
       end
-
-      metadata.instance_eval(&block) if block_given?
     end
 
     alias_method :seq,  :sequence
@@ -113,7 +93,7 @@ module Wrnap
     end
 
     alias_method :empty_str, def empty_structure
-      "." * len
+      Structure.init_from_string("." * len)
     end
 
     alias_method :no_str, def no_structure
@@ -133,11 +113,7 @@ module Wrnap
     end
     
     def formatted_string
-      [
-        (">%s" % name if name),
-        ("%s"  % seq  if seq),
-        *structures
-      ].compact.join(?\n)
+      [(">%s" % name if name), (seq if seq), *structures.map(&:as_string)].compact.join(?\n)
     end
 
     def write_fa!(filename)
@@ -154,25 +130,12 @@ module Wrnap
       Wrnap::Package.lookup(package_name).run(self, options)
     end
 
-    def eql?(other_rna)
-      self == other_rna
-    end
-
-    def ==(other_rna)
-      other_rna.kind_of?(Wrnap::Rna) ? [seq, str_1, str_2] == [other_rna.seq, other_rna.str_1, other_rna.str_2] : super
-    end
-
     def pp
       puts(formatted_string)
     end
     
     def inspect
-      "#<RNA: %s>" % [
-        ("#{seq[0, 20] + (len > 20 ? '... [%d]' % len : '')}" if seq && !seq.empty?),
-        *strs.map { |str| ("#{str[0, 20] + (str.length > 20 ? ' [%d]' % str.length : '')}" if str && !str.empty?) },
-        (md.inspect unless md.nil? || md.empty?),
-        (name ? name : "#{self.class.name}")
-      ].compact.join(", ")
+      "#<RNA: %s>" % [seq.inspect, *strs.map(&:inspect), name.empty? ? self.class.name : name].compact.join(", ")
     end
     
     handle_methods_like(/^str(ucture)?_(\d+)$/) do |match, name, *args, &block|

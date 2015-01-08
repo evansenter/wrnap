@@ -4,15 +4,8 @@ module Wrnap
       def self.included(base)
         base.send(:include, InstanceMethods)
         base.extend(ClassMethods)
-        base.extend(OneStructureBasedMethods)
         base.extend(TwoStructureBasedMethods)
         base.class_eval do
-          OneStructureBasedMethods.public_instance_methods.each do |class_method|
-            define_method(class_method) do |*args|
-              self.class.send(class_method, *[structure].concat(args))
-            end
-          end
-
           TwoStructureBasedMethods.public_instance_methods.each do |class_method|
             define_method(class_method) do |*args|
               self.class.send(class_method, *[str_1, str_2].concat(args))
@@ -31,10 +24,6 @@ module Wrnap
 
         def shuffle(sequence, token_length = 2)
           Shuffle.new(sequence).shuffle(token_length)
-        end
-
-        def structure_from_bp_list(length, base_pairs)
-          base_pairs.to_a.map(&:to_a).map(&:sort).inject("." * length) { |structure, (i, j)| structure.tap { structure[i] = ?(; structure[j] = ?) } }
         end
       end
 
@@ -103,68 +92,6 @@ module Wrnap
 
         def boltzmann_probability(dangle: 2)
           Math.exp(-run(:eval, d: dangle).mfe / Wrnap::RT) / Math.exp(-run(:fold, d: dangle, p: 0).ensemble_energy / Wrnap::RT)
-        end
-      end
-
-      module OneStructureBasedMethods
-        def max_bp_distance(structure)
-          base_pairs(structure).count + ((structure.length - 3) / 2.0).floor
-        end
-        
-        def loops_and_helices(structure)
-          [loop_regions(structure), collapsed_helices(structure, lonely_bp: true)]
-        end
-        
-        def loop_regions(structure)
-          [structure.split(//), (0...structure.length).to_a].transpose.select { |char, _| char == ?. }.inject([]) do |array, (_, index)|
-            array.tap do
-              matching_loop = array.map(&:last).each_with_index.find { |end_of_loop, _| end_of_loop + 1 == index }
-              matching_loop ? array[matching_loop[-1]][-1] += 1 : array << [index, index]
-            end
-          end.map { |loop_indices| Loop.new(*loop_indices) }
-        end
-        
-        def helices(structure)
-          unless (array = base_pairs(structure).sort_by(&:first).map(&:to_a)).empty?
-            array[1..-1].inject([[array.first]]) do |bins, (i, j)|
-              bins.tap { bins[-1][-1] == [i - 1, j + 1] ? bins[-1] << [i, j] : bins << [[i, j]] }
-            end
-          else
-            []
-          end
-        end
-
-        def collapsed_helices(structure, lonely_bp: false)
-          helices(structure).map { |((i, j), *rest)| Helix.new(i, j, rest.length + 1) }.select { |helix| lonely_bp ? helix : helix.length > 1 }
-        end
-
-        def base_pairs(structure)
-          get_pairings(structure).each_with_index.inject(Set.new) do |set, (j, i)|
-            j >= 0 ? set << Set[i, j] : set
-          end
-        end
-
-        def get_pairings(structure)
-        	stack = []
-
-          structure.each_char.each_with_index.inject(Array.new(structure.length, -1)) do |array, (symbol, index)|
-        	  array.tap do
-        	    case symbol
-        	    when "(" then stack.push(index)
-        	    when ")" then
-        	      if stack.empty?
-        	        raise "Too many ')' in '#{structure}'"
-        	      else
-        	        stack.pop.tap do |opening|
-        	          array[opening] = index
-        	          array[index]   = opening
-        	        end
-        	      end
-        	    end
-        	  end
-        	end.tap do
-        	  raise "Too many '(' in '#{structure}'" unless stack.empty?
-        	end
         end
       end
 

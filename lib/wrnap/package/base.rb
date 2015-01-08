@@ -41,10 +41,10 @@ module Wrnap
 
           @data = case data.map(&:class)
           when [Wrnap::Rna], [Wrnap::Rna::Context] then data.first
-          when *(1..3).map { |i| [String] * i }                    then RNA.from_string(*data)
-          when [Hash]                                              then RNA.from_hash(*data)
-          when [Array]                                             then RNA.from_array(*data)
-          when [NilClass]                                          then Wrnap::Rna.placeholder
+          when *(1..3).map { |i| [String] * i }    then RNA.from_string(*data)
+          when [Hash]                              then RNA.from_hash(*data)
+          when [Array]                             then RNA.from_array(*data)
+          when [NilClass]                          then Wrnap::Rna.placeholder
           else raise TypeError.new("Unsupported Wrnap::Rna#initialize format: #{data}")
           end
         else

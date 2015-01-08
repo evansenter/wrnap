@@ -1,5 +1,4 @@
-require "active_support/core_ext"
-require "active_support/inflector"
+require "active_support"
 require "benchmark"
 require "bigdecimal"
 require "bio"
@@ -15,6 +14,7 @@ require "set"
 require "shuffle"
 require "tempfile"
 require "tree"
+require "virtus"
 require "yaml"
 
 unless %x[which R].empty?
