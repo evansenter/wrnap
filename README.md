@@ -1,5 +1,7 @@
 # wrnap (w(RNA)p)
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/evansenter/wrnap?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Gem Version](https://badge.fury.io/rb/wrnap.png)](http://badge.fury.io/rb/wrnap)
 
 A simple gem for facilitating bindings to various RNA CLI packages (namely http://www.tbi.univie.ac.at/~ivo/RNA/). Note that this gem makes no effort to build and install any wrapped packages at install-time, and instead relies on its presence on the host machine. Also includes a lot of utilities surrounding RNA sequence / structure parsing, graphing using R (via RinRuby) and other analysis tools. Used privately as the foundation for much of the research I do at http://bioinformatics.bc.edu/clotelab/
