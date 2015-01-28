@@ -8,13 +8,13 @@ module Wrnap
 
       self.default_flags = ->(context, flags) do
         {
-          "-fftbor2d-i" => context.data.seq,
-          "-fftbor2d-j" => context.data.str_1,
-          "-fftbor2d-k" => context.data.str_2,
+          "--fftbor2d-i" => context.data.seq,
+          "--fftbor2d-j" => context.data.str_1,
+          "--fftbor2d-k" => context.data.str_2,
           "X"           => true
         }
       end
-      self.quote_flag_params = %w|-fftbor2d-i -fftbor2d-j -fftbor2d-k|
+      self.quote_flag_params = %w|--fftbor2d-i --fftbor2d-j --fftbor2d-k|
 
       attr_reader :mfpt
 

@@ -12,7 +12,7 @@ module Wrnap
 
         context.data.name ? defaults.merge(title: context.data.name) : defaults
       end
-      self.quote_flag_params = %w|sequenceDBN structureDBN title|
+      self.quote_flag_params = %i|sequenceDBN structureDBN title|
 
       def run_command(flags)
         "java -Djava.awt.headless=true fr.orsay.lri.varna.applications.VARNAcmd %s" % stringify_flags(flags)

@@ -4,7 +4,7 @@ module Wrnap
       self.default_flags = {
         d:         0,
         p:         true,
-        "-noBT" => true
+        "--noBT" => true
       }
 
       self.executable_name = "RNA2Dfold"

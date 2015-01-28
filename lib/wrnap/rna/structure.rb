@@ -59,7 +59,7 @@ module Wrnap
       alias_method :bps, :base_pairs
       alias_method :len, :length
       
-      def as_string
+      alias_method :to_s, def as_string
         @as_string ||= self.class.as_string(self)
       end
       

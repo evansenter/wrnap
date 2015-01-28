@@ -5,10 +5,10 @@ module Wrnap
 
       self.default_flags = ->(context, flags) do
         {
-          "-fftbor2d-i"   => context.data.seq,
-          "-fftbor2d-j"   => context.data.str_1,
-          "-fftbor2d-k"   => context.data.str_2,
-          "-population-q" => true
+          "--fftbor2d-i"   => context.data.seq,
+          "--fftbor2d-j"   => context.data.str_1,
+          "--fftbor2d-k"   => context.data.str_2,
+          "--population-q" => true
         }
       end
 

@@ -11,10 +11,6 @@ module Wrnap
         def_delegators :@content, :i, :j, :k, :l
         def_delegator  :@content, :length, :stem_length
       
-        def in(sequence)
-          sequence[i..j]
-        end
-      
         def unpaired_regions
           Wrnap.debugger { "Collecting unpaired regions for %s" % [root.content.name] }
         
@@ -88,7 +84,7 @@ module Wrnap
           elsif child = children[indices[0] - 1]
             case call_type
             when ?p then helix_index.empty? ? child.content : child.send(helix_index)
-            when ?t then child
+            when ?t then Planter.new(root.content, Stem.new(:subtree, root.content).tap { |stem| stem << child })
             end
           end
         end

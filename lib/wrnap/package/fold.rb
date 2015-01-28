@@ -2,7 +2,7 @@ module Wrnap
   module Package
     class Fold < Base
       self.default_flags = {
-        "-noPS" => :empty
+        "--noPS" => :empty
       }
     
       attr_reader :mfe_rna, :structure, :mfe, :ensemble_energy
