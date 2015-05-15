@@ -26,22 +26,22 @@ end
 
 module Wrnap
   Autoloaded.module {}
-  
+
   module Etl
     Autoloaded.module { |loader| loader.from(File.join(File.dirname(__FILE__), "wrnap", "etl")) }
   end
-  
+
   module Global
     Autoloaded.module { |loader| loader.from(File.join(File.dirname(__FILE__), "wrnap", "global")) }
   end
-  
+
   module Graphing
     Autoloaded.module { |loader| loader.from(File.join(File.dirname(__FILE__), "wrnap", "graphing")) }
   end
-  
+
   RT     = 1e-3 * 1.9872041 * (273.15 + 37) # kcal / K / mol @ 37C
   @debug = true
-  
+
   def self.patch_array!
     Array.send(:include, Wrnap::Rna::Wrnapper)
   end
@@ -59,9 +59,6 @@ module Wrnap
   end
 end
 
-# -----------------------------------------------------------------------------------------------
-# This dirties up the public namespace, but I use it so many times that I want a shorthand to it.
-# -----------------------------------------------------------------------------------------------
 unless defined?(RNA)
   def RNA(*args, &block)
     RNA.from_array(args, &block)
