@@ -30,6 +30,8 @@ module Wrnap
         private
 
         def base_pairs_from_string(dot_bracket_structure)
+          raise ArgumentError.new("Provided structure contains invalid characters") unless /^[\.\(\)]*$/ =~ dot_bracket_structure
+
           base_pairs = pairing_list_from_string(dot_bracket_structure).each_with_index.inject(SortedSet.new) do |set, (j, i)|
             j >= 0 ? set << [i, j].sort : set
           end
@@ -46,7 +48,7 @@ module Wrnap
               when ?( then stack.push(index)
               when ?) then
                 if stack.empty?
-                  raise "Too many ')' in '#{dot_bracket_structure}'"
+                  raise ArgumentError.new("Too many ')' in '#{dot_bracket_structure}'")
                 else
                   stack.pop.tap do |opening|
                     array[opening] = index
@@ -56,7 +58,7 @@ module Wrnap
               end
             end
           end.tap do
-            raise "Too many '(' in '#{dot_bracket_structure}'" unless stack.empty?
+            raise ArgumentError.new("Too many '(' in '#{dot_bracket_structure}'") unless stack.empty?
           end
         end
       end

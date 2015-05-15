@@ -8,9 +8,9 @@ module Wrnap
 
       module ClassMethods
         def exec_exists?(name)
-          !%x[which RNA#{name.to_s.downcase}].empty? || !%x[which #{name.to_s.downcase}].empty?
+          !%x|which RNA#{name.to_s.downcase}|.empty? || !%x|which #{name.to_s.downcase}|.empty?
         end
-        
+
         def exec_name
           executable_name.respond_to?(:call) ? executable_name[self] : executable_name
         end
@@ -32,7 +32,7 @@ module Wrnap
 
                 Wrnap.debugger { runnable_command }
 
-                @response        = %x[#{runnable_command}]
+                @response        = %x|#{runnable_command}|
                 post_process if respond_to?(:post_process)
               end
 
@@ -42,13 +42,13 @@ module Wrnap
             self
           end
         end
-        
+
         def exec_name
           self.class.exec_name
         end
-        
+
         private
-        
+
         def run_command(user_flags)
           "echo %s | %s %s" % [
             "'%s'" % call_with.map { |datum| data.send(datum).to_s }.join(?\n),
@@ -56,7 +56,7 @@ module Wrnap
             stringify_flags(user_flags)
           ]
         end
-        
+
         def pre_run_check
           valid_to_run = if self.class.instance_variable_get(:@pre_run_checked)
             self.class.instance_variable_get(:@valid_to_run)
@@ -67,8 +67,8 @@ module Wrnap
               @valid_to_run    = exec_exists?(exec_name)
             end
           end
-          
-          
+
+
           raise RuntimeError.new("#{exec_name} is not defined on this machine") unless valid_to_run
         end
 
@@ -89,10 +89,10 @@ module Wrnap
             @flags = flags
           end
         end
-        
+
         def stringify_flag(flag, value)
           flag = cast_symbol_flags(flag)
-          
+
           if value == :empty || value == true
             flag
           elsif quote_flag_params.map(&method(:cast_symbol_flags)).include?(flag)
@@ -101,7 +101,7 @@ module Wrnap
             "%s %s" % [flag, value.to_s]
           end
         end
-        
+
         def cast_symbol_flags(flag)
           flag.is_a?(Symbol) ? "-%s" % flag : flag
         end

@@ -3,7 +3,7 @@ module Wrnap
     def self.extended(base)
       base.class_eval do
         prepend Wrnap::Rna::ConstructorInterceptor
-        include Virtus.value_object(strict: true)
+        include Virtus.model
 
         values do
           attribute :sequence,   Wrnap::Rna::SequenceWrapper
@@ -16,6 +16,8 @@ module Wrnap
         alias_method :strs, :structures
         alias_method :name, :comment
         alias_method :md,   :metadata
+
+        %i|structure= strs= str=|.each { |assigner| alias_method assigner, :structures= }
       end
     end
 
