@@ -18,12 +18,6 @@ require "tree"
 require "virtus"
 require "yaml"
 
-unless %x[which R].empty?
-  require "rinruby"
-  # RinRuby opens up a connection to R by default, we don't want that. Connections are opened on-demand.
-  begin; R.quit; rescue IOError; end
-end
-
 module Wrnap
   Autoloaded.module {}
 
@@ -33,10 +27,6 @@ module Wrnap
 
   module Global
     Autoloaded.module { |loader| loader.from(File.join(File.dirname(__FILE__), "wrnap", "global")) }
-  end
-
-  module Graphing
-    Autoloaded.module { |loader| loader.from(File.join(File.dirname(__FILE__), "wrnap", "graphing")) }
   end
 
   RT     = 1e-3 * 1.9872041 * (273.15 + 37) # kcal / K / mol @ 37C
