@@ -1,10 +1,9 @@
 module Wrnap
   class Rna
     module ConstructorInterceptor
-      def initialize(*args, &block)
+      def initialize(*args)
         super
         cast_symbolized_structures
-        instance_eval(&block) if block_given?
       end
 
       private

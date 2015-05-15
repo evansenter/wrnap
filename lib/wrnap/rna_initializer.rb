@@ -3,6 +3,7 @@ module Wrnap
     def self.extended(base)
       base.class_eval do
         prepend Wrnap::Rna::ConstructorInterceptor
+        include Virtus.value_object(strict: true)
 
         values do
           attribute :sequence,   Wrnap::Rna::SequenceWrapper
@@ -18,24 +19,24 @@ module Wrnap
       end
     end
 
-    def init_from_hash(hash, &block)
+    def init_from_hash(hash)
       new({
         sequence:   hash[:sequence]   || hash[:seq],
         structures: hash[:structures] || hash[:structure] || hash[:strs] || hash[:str],
         comment:    hash[:comment]    || hash[:name],
         metadata:   hash[:metadata]   || hash[:md]
-      }.select { |_, value| value }, &block)
+      }.select { |_, value| value })
     end
 
-    def init_from_string(sequence, *remaining_args, &block)
-      init_from_hash(parse_rna_attributes(sequence, remaining_args), &block)
+    def init_from_string(sequence, *remaining_args)
+      init_from_hash(parse_rna_attributes(sequence, remaining_args))
     end
 
-    def init_from_array(array, &block)
-      init_from_string(*array, &block)
+    def init_from_array(array)
+      init_from_string(*array)
     end
 
-    alias_method :init_from_fa, def init_from_fasta(string, &block)
+    alias_method :init_from_fa, def init_from_fasta(string)
       if File.exist?(string)
         comment = File.basename(string, string.include?(?.) ? ".%s" % string.split(?.)[-1] : "")
         string  = File.read(string).chomp
@@ -47,7 +48,7 @@ module Wrnap
           init_from_string(*rna_data[1..-1]).copy_name_from(rna_data[0])
         end.wrnap
       else
-        init_from_string(*string.split(?\n).reject { |line| line.start_with?(?>) || line.empty? }, &block).tap do |rna|
+        init_from_string(*string.split(?\n).reject { |line| line.start_with?(?>) || line.empty? }).tap do |rna|
           if (line = string.split(?\n).first).start_with?(?>) && !(file_comment = line.gsub(/^>\s*/, "")).empty?
             rna.comment = file_comment
           elsif comment
@@ -57,8 +58,8 @@ module Wrnap
       end
     end
 
-    def init_from_context(*context, coords: {}, rna: {}, &block)
-      Context.init_from_entrez(*context, coords: coords, rna: rna, &block)
+    def init_from_context(*context, coords: {}, rna: {})
+      Context.init_from_entrez(*context, coords: coords, rna: rna)
     end
 
     private

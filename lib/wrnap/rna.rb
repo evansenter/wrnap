@@ -4,7 +4,6 @@ module Wrnap
 
     prepend MetaMissing
     extend Forwardable
-    include Virtus.value_object(strict: true)
     extend Wrnap::RnaInitializer
     include Wrnap::Global::Yaml
     include Wrnap::Rna::Extensions
