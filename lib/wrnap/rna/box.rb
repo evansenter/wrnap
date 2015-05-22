@@ -25,6 +25,10 @@ module Wrnap
         end
       end
 
+      def p
+        rnas.each(&:p) and nil
+      end
+
       def pp
         rnas.each(&:pp) and nil
       end

@@ -5,11 +5,13 @@ module Wrnap
     prepend MetaMissing
     extend Forwardable
     extend Wrnap::RnaInitializer
+    include Wrnap::Global::Hashmarks
     include Wrnap::Global::Yaml
     include Wrnap::Rna::Extensions
     include Wrnap::Rna::Wrnapper
     include Wrnap::Rna::Constraints
 
+    def_delegator :@sequence,   :length, :length
     def_delegator :@sequence,   :length, :len
     def_delegator :@structures, :first,  :structure
     def_delegator :@structures, :first,  :str
@@ -60,7 +62,7 @@ module Wrnap
       Wrnap::Package.lookup(package_name).run(self, options)
     end
 
-    def pp
+    def p
       puts(formatted_string)
     end
 
@@ -68,7 +70,7 @@ module Wrnap
       "#<RNA: %s>" % [seq.inspect, *strs.map(&:inspect), name.empty? ? self.class.name : name].compact.join(", ")
     end
 
-    handle_methods_like(/^str(ucture)?_(\d+)$/) do |match, name, *args, &block|
+    handle_methods_like(/^str(ucture)?_?(\d+)$/) do |match, name, *args, &block|
       structures[match[2].to_i - 1]
     end
 

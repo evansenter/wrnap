@@ -2,6 +2,7 @@ module Wrnap
   class Rna
     class Structure
       extend StructureInitializer
+      include Wrnap::Global::Hashmarks
 
       alias_method :to_s, def as_string
         @as_string ||= self.class.as_string(self)
@@ -26,6 +27,10 @@ module Wrnap
 
       def collapsed_helices(lonely_bp: false)
         all_helices.map { |((i, j), *rest)| Helix.new(i: i, j: j, length: rest.length + 1) }.select { |helix| lonely_bp ? helix : helix.length > 1 }
+      end
+
+      def p
+        puts to_s
       end
 
       def inspect
