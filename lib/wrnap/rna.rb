@@ -21,7 +21,7 @@ module Wrnap
     end
 
     alias_method :num_strs, def number_of_structures
-      structures.length
+      strs.length
     end
 
     alias_method :empty_str, def empty_structure
@@ -32,20 +32,20 @@ module Wrnap
       self.class.init_from_string(seq, name)
     end
 
-    alias_method :one_str, def one_structure(structure_1)
-      self.class.init_from_string(seq, structure_1.is_a?(Symbol) ? send(structure_1) : structure_1, name)
+    alias_method :one_str, def one_structure(str_1)
+      self.class.init_from_string(seq, str_1.is_a?(Symbol) ? send(str_1) : str_1, name)
     end
 
-    alias_method :two_str, def two_structures(structure_1, structure_2)
+    alias_method :two_str, def two_structures(str_1, str_2)
       self.class.init_from_string(
         seq,
-        [structure_1, structure_2].map { |argument| argument.is_a?(Symbol) ? send(argument) : argument },
+        [str_1, str_2].map { |argument| argument.is_a?(Symbol) ? send(argument) : argument },
         name
       )
     end
 
     def formatted_string
-      [(">%s" % name if name), (seq if seq), *structures.map(&:as_string)].compact.join(?\n)
+      [(">%s" % name if name), (seq if seq), *strs.map(&:as_string)].compact.join(?\n)
     end
 
     def write_fa!(filename)

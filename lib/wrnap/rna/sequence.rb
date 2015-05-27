@@ -3,6 +3,10 @@ module Wrnap
     class Sequence < Bio::Sequence::NA
       include Wrnap::Global::Hashmarks
 
+      def self.init_from_string(string)
+        new(string)
+      end
+
       def to_s; self; end
 
       def p
