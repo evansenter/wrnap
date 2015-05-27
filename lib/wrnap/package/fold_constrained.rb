@@ -5,7 +5,7 @@ module Wrnap
       self.call_with       = [:seq, :constraint_mask]
       self.default_flags   = {
         :C      => true,
-        "-noPS" => :empty
+        "--noPS" => :empty
       }
 
       attr_reader :mfe_rna, :structure, :mfe, :ensemble_energy

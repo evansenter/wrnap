@@ -2,6 +2,10 @@ module Wrnap
   module Global
     module Chainer
       def self.included(base)
+        # do something like include chainable, from: [], do |from|
+        #
+        # end
+        
         base.send(:include, InstanceMethods)
       end
 

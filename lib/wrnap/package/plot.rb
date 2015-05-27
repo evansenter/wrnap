@@ -1,7 +1,7 @@
 module Wrnap
   module Package
     class Plot < Base
-      self.quote_flag_params = %w|-pre -post|
+      self.quote_flag_params = %w|--pre --post|
 
       def run_command(flags)
         "cat %s | %s %s" % [

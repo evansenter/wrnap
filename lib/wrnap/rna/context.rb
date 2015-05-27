@@ -2,67 +2,42 @@ module Wrnap
   class Rna
     class Context < Rna
       extend Forwardable
-      
+
       attr_reader :accession, :from, :to, :coord_options
 
       class << self
-        def init_from_entrez(accession, from, to, options = {}, &block)
+        def init_from_entrez(accession, from, to, options = {})
           new(
             accession: accession,
             from:      from.to_i,
             to:        to.to_i,
-            options:   options,
-            &block
-          )
-        end
-
-        def init_from_string(sequence, accession, from, to, options = {}, &block)
-          new(
-            sequence:  sequence,
-            accession: accession,
-            from:      from.to_i,
-            to:        to.to_i,
-            options:   options,
-            &block
+            options:   options
           )
         end
       end
 
-      def initialize(sequence: nil, accession: nil, from: nil, to: nil, options: {}, &block)
-        options = { coords: {}, rna: {} }.merge(options)
+      def initialize(accession: nil, from: nil, to: nil, options: {})
+        @accession, @from, @to, @coord_options = accession, from, to, validate_coord_options(options)
 
-        @accession, @from, @to, @coord_options = accession, from, to, options[:coords]
-
-        validate_coord_options
-
-        if sequence
-          @raw_sequence = (sequence.is_a?(String) ? Bio::Sequence::NA.new(sequence) : sequence).upcase
-        end
-
-        super(
-          sequence:   self.sequence,
-          structures: options[:rna][:structures] || options[:rna][:structure] || options[:rna][:strs] || options[:rna][:str],
-          comment:    options[:rna][:comment] || options[:rna][:name] || identifier,
-          &block
-        )
-
-        remove_instance_variable(:@sequence)
+        super(sequence: retrieve_sequence, comment: identifier)
       end
 
-      def validate_coord_options
-        unless coord_options.empty?
-          unless Set.new(coord_options.keys) == Set.new(%i|direction length|)
-            raise ArgumentError.new("coord_options keys must contain only [:direction, :length], found: %s" % coord_options.keys)
+      def validate_coord_options(options)
+        unless options.empty?
+          unless Set.new(options.keys) == Set.new(%i|direction length|)
+            raise ArgumentError.new("coord_options keys must contain only [:direction, :length], found: %s" % options.keys)
           end
 
-          unless (length = coord_options[:length]).is_a?(Integer) && length > 0
+          unless (length = options[:length]).is_a?(Integer) && length > 0
             raise ArgumentError.new("coord_options length must be greater than 0, found: %d" % length)
           end
 
-          unless [:up, :down, :both, 5, 3].include?(direction = coord_options[:direction])
+          unless [:up, :down, :both, 5, 3].include?(direction = options[:direction])
             raise ArgumentError.new("coord_options directions is not a valid key, found: %s" % direction)
           end
         end
+
+        options
       end
 
       def up_coord
@@ -74,11 +49,11 @@ module Wrnap
       end
 
       def seq_from
-        up_coord + coord_window.min
+        up_coord + (plus_strand? ? coord_window.min : coord_window.max)
       end
 
       def seq_to
-        up_coord + coord_window.max
+        up_coord + (minus_strand? ? coord_window.min : coord_window.max)
       end
 
       def strand
@@ -93,23 +68,19 @@ module Wrnap
         !plus_strand?
       end
 
-      alias_method :seq, def sequence
-        if @raw_sequence
-          @raw_sequence
-        else
-          entrez_sequence = Wrnap::Global::Entrez.rna_sequence_from_entrez(accession, up_coord, coord_window)
-          @raw_sequence   = (minus_strand? ? entrez_sequence.complement : entrez_sequence).upcase
-        end
+      def retrieve_sequence
+        retrieved_sequence = Wrnap::Global::Entrez.sequence_from_entrez(accession, up_coord, coord_window)
+
+        minus_strand? ? retrieved_sequence.complement : retrieved_sequence
       end
-      
+
       def_delegator :@raw_sequence, :length, :len
 
-      def extend!(coord_options = {})
+      def expand(coord_options = {})
         self.class.init_from_entrez(accession, from, to, coords: coord_options)
       end
 
       def coord_window
-        # This does not support extending the range in both directions, though it should be easy to do.
         # Options from coord_options ex: { length: 300, direction: 3 }, { length: 250, direction: :both }, { length: 200, direction: :down }
         range = 0..(down_coord - up_coord)
 
@@ -127,11 +98,11 @@ module Wrnap
           range
         end
       end
-      
+
       def identifier
-        "%s %d %s %d" % [accession, seq_from, plus_strand? ? ?+ : ?-, seq_to]
+        "%s %d - %d" % [accession, seq_from, seq_to]
       end
-      
+
       def _id
         identifier.gsub(/[^A-Z0-9]/, ?_).gsub(/__+/, ?_)
       end

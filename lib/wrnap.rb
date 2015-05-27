@@ -1,5 +1,5 @@
-require "active_support/core_ext"
-require "active_support/inflector"
+require "active_support"
+require "autoloaded"
 require "benchmark"
 require "bigdecimal"
 require "bio"
@@ -15,43 +15,25 @@ require "set"
 require "shuffle"
 require "tempfile"
 require "tree"
+require "virtus"
 require "yaml"
 
-unless %x[which R].empty?
-  require "rinruby"
-  # RinRuby opens up a connection to R by default, we don't want that. Connections are opened on-demand.
-  begin; R.quit; rescue IOError; end
-end
-
-require "wrnap/version"
-
-%w|global rna etl graphing|.each do |subfolder|
-  Dir[File.join(File.dirname(__FILE__), "wrnap", subfolder, "*.rb")].each do |file|
-    require file
-  end
-end
-
-require "wrnap/rna"
-require "wrnap/package/base"
-
 module Wrnap
+  Autoloaded.module {}
+
+  module Etl
+    Autoloaded.module { |loader| loader.from(File.join(File.dirname(__FILE__), "wrnap", "etl")) }
+  end
+
+  module Global
+    Autoloaded.module { |loader| loader.from(File.join(File.dirname(__FILE__), "wrnap", "global")) }
+  end
+
   RT     = 1e-3 * 1.9872041 * (273.15 + 37) # kcal / K / mol @ 37C
   @debug = true
 
-  module Package
-    Dir[File.join(File.dirname(__FILE__), "wrnap", "package", "*.rb")].reject { |file| file =~ /\/base.rb$/ }.each do |file|
-      autoload(File.basename(file, ".rb").camelize.to_sym, File.join("wrnap", "package", File.basename(file, ".rb")))
-    end
-
-    def self.const_missing(name)
-      if const_defined?(name)
-        const_get(name)
-      elsif Base.exec_exists?(name)
-        module_eval do
-          const_set(name, Class.new(Base))
-        end
-      end
-    end
+  def self.patch_array!
+    Array.send(:include, Wrnap::Rna::Wrnapper)
   end
 
   def self.debugger
@@ -67,13 +49,7 @@ module Wrnap
   end
 end
 
-# -----------------------------------------------------------------------------------------------
-# This dirties up the public namespace, but I use it so many times that I want a shorthand to it.
-# -----------------------------------------------------------------------------------------------
-
-class Array; include Wrnap::Rna::Wrnapper; end
-
-unless defined? RNA
+unless defined?(RNA)
   def RNA(*args, &block)
     RNA.from_array(args, &block)
   end
