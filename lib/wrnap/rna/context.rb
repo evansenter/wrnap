@@ -14,12 +14,22 @@ module Wrnap
             options:   options
           )
         end
+
+        def init_from_string(sequence, accession, from, to, options = {})
+          new(
+            sequence:  sequence,
+            accession: accession,
+            from:      from.to_i,
+            to:        to.to_i,
+            options:   options
+          )
+        end
       end
 
-      def initialize(accession: nil, from: nil, to: nil, options: {})
+      def initialize(sequence: nil, accession: nil, from: nil, to: nil, options: {})
         @accession, @from, @to, @coord_options = accession, from, to, validate_coord_options(options)
 
-        super(sequence: retrieve_sequence, comment: identifier)
+        super(sequence: sequence || retrieve_sequence, comment: identifier)
       end
 
       def validate_coord_options(options)
@@ -73,8 +83,6 @@ module Wrnap
 
         minus_strand? ? retrieved_sequence.complement : retrieved_sequence
       end
-
-      def_delegator :@raw_sequence, :length, :len
 
       def expand(coord_options = {})
         self.class.init_from_entrez(accession, from, to, coords: coord_options)
