@@ -1,6 +1,8 @@
 module Wrnap
   module Package
     class Subopt < Base
+      self.executable_name = "RNAsubopt"
+
       attr_reader :structures
 
       def post_process
