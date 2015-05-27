@@ -1,8 +1,10 @@
 module Wrnap
   module Package
     class Heat < Base
+      self.executable_name = "RNAheat"
+
       attr_reader :specific_heats
-    
+
       def post_process
         @specific_heats = response.split(/\n/).map { |line| line.split(/\s+/).map(&:to_f) }.inject({}) do |hash, (temp, specific_heat)|
           hash.tap do

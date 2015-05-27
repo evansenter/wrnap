@@ -7,8 +7,8 @@ module Wrnap
       end
 
       module ClassMethods
-        def exec_exists?(name)
-          !%x|which RNA#{name.to_s.downcase}|.empty? || !%x|which #{name.to_s.downcase}|.empty?
+        alias_method :exec_path, def exec_exists?(name = nil)
+          File.which(name || exec_name)
         end
 
         def exec_name
@@ -43,6 +43,10 @@ module Wrnap
           end
         end
 
+        def exec_path
+          self.class.exec_path
+        end
+
         def exec_name
           self.class.exec_name
         end
@@ -52,7 +56,7 @@ module Wrnap
         def run_command(user_flags)
           "echo %s | %s %s" % [
             "'%s'" % call_with.map { |datum| data.send(datum).to_s }.join(?\n),
-            exec_name,
+            exec_path,
             stringify_flags(user_flags)
           ]
         end
@@ -64,7 +68,7 @@ module Wrnap
             Wrnap.debugger { "Checking existence of executable %s." % exec_name }
             self.class.class_eval do
               @pre_run_checked = true
-              @valid_to_run    = exec_exists?(exec_name)
+              @valid_to_run    = exec_exists?
             end
           end
 
