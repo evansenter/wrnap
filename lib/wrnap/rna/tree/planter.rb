@@ -3,14 +3,14 @@ module Wrnap
     module Tree
       class Planter
         prepend MetaMissing
-  
+
         attr_reader :structure, :root
 
-        def initialize(structure, tree = false)
+        def initialize(structure, tree: false, lonely_bp: false)
           @structure = structure
-          @root      = tree || build_tree(structure.collapsed_helices)
+          @root      = tree || build_tree(structure.collapsed_helices(lonely_bp: lonely_bp))
         end
-  
+
         # RNA.from_fa("xpt.fa").trunk.pp
         # * root
         # |---+ (5..12, 66..73 [8])
@@ -20,7 +20,7 @@ module Wrnap
         # |    +---> (80..86, 95..101 [7]) <-
         # +---> (112..125, 133..146 [14])
         #
-        # RNA.from_fa("xpt.fa").trunk.coalesce.pp
+        # RNA.from_fa("xpt.fa").trunk.prune_interior_loops.pp
         # * root
         # |---+ (5..12, 66..73 [8])
         # |    |---> (18..22, 30..34 [5])
@@ -28,14 +28,14 @@ module Wrnap
         # |---> (80..86, 95..101 [7])      <-
         # +---> (112..125, 133..146 [14])
 
-        def coalesce
-          self.class.new(structure, root.clone).tap { |tree| tree.merge_interior_loops! }
+        def prune_interior_loops
+          self.class.new(structure, tree: root.clone).tap { |tree| tree.handle_interior_loops_by_pruning! }
         end
 
-        def coalesce!
-          tap { merge_interior_loops! }
+        def prune_interior_loops!
+          tap { handle_interior_loops_by_pruning! }
         end
-  
+
         # RNA.from_fa("xpt.fa").trunk.pp
         # * root
         # |---+ (5..12, 66..73 [8])
@@ -45,40 +45,41 @@ module Wrnap
         # |    +---> (80..86, 95..101 [7]) <-
         # +---> (112..125, 133..146 [14])
         #
-        # RNA.from_fa("xpt.fa").trunk.fuse.pp
+        # RNA.from_fa("xpt.fa").trunk.merge_interior_loops.pp
         # * root
         # |---+ (5..12, 66..73 [8])
         # |    |---> (18..22, 30..34 [5])
         # |    +---> (45..50, 58..63 [6])
         # |---> (75..86, 94..105 [12])     <-
         # +---> (112..125, 133..146 [14])
-        def fuse
-          self.class.new(structure, root.clone).tap { |tree| tree.extend_interior_loops! }
+
+        def merge_interior_loops
+          self.class.new(structure, tree: root.clone).tap { |tree| tree.handle_interior_loops_by_merging! }
         end
 
-        def fuse!
-          tap { extend_interior_loops! }
+        def merge_interior_loops!
+          tap { handle_interior_loops_by_merging! }
         end
 
         def depth_signature
           root.map(&:node_depth)
         end
 
-        def pp
+        alias_method :p, def pp
           root.print_tree and nil
         end
 
         def inspect
           "#<Planter: %s>" % depth_signature.inspect
         end
-  
+
         handle_methods_like(Stem::STEM_NOTATION_REGEX) do |match, name, *args, &block|
           root.send(name, *args, &block)
         end
-        
-        protected
-        
-        def extend_interior_loops!
+
+        private
+
+        def handle_interior_loops_by_merging!
           handle_interior_loops! do |node, child|
             node.content.merge!(child.content)
             child.remove_from_parent!
@@ -86,27 +87,25 @@ module Wrnap
           end
         end
 
-        def merge_interior_loops!
+        def handle_interior_loops_by_pruning!
           handle_interior_loops! do |node, child|
             node.parent.add(child)
             node.remove_from_parent!
           end
         end
-        
-        private
-        
+
         def handle_interior_loops!(&block)
           root.tap do
             root.postorder_traversal do |node|
-              if node.children.count == 1 && !node.is_root?              
+              if node.children.count == 1 && !node.is_root?
                 yield(node, node.children.first)
               end
             end
-      
+
             extend_tree!
           end
         end
-        
+
         def build_tree(helices)
           helices.inject(Stem.new(:root, structure)) do |tree, helix|
             add_node(tree, Stem.new(helix.name, helix))
@@ -114,7 +113,7 @@ module Wrnap
         end
 
         def extend_tree(*helices)
-          self.class.new(structure, rebuild_tree(helices))
+          self.class.new(structure, tree: rebuild_tree(helices))
         end
 
         def extend_tree!(*helices)
